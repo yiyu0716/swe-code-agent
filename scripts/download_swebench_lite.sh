@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 
 BASE_URL="${SWETRACE_HF_MIRROR:-https://hf-mirror.com}"
 DATASET_ID="${SWETRACE_SWEBENCH_DATASET:-princeton-nlp/SWE-bench_Lite}"
-OUT_DIR="${SWETRACE_SWEBENCH_CACHE:-cache/swebench_lite}"
+OUT_DIR="${SWETRACE_SWEBENCH_CACHE:-/data/yiyuldx/swe/cache/swebench_lite}"
 
 mkdir -p "${OUT_DIR}/data"
 

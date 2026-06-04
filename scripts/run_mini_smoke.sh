@@ -18,6 +18,7 @@ MODEL="${SWETRACE_MINI_MODEL:-gpt-4.1-mini}"
 SUBSET="${SWETRACE_MINI_SUBSET:-lite}"
 SPLIT="${SWETRACE_MINI_SPLIT:-dev}"
 TIMEOUT_SECONDS="${SWETRACE_MINI_TIMEOUT_SECONDS:-1800}"
+OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"
 PIP_INDEX_URL="${SWETRACE_MINI_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 PIP_TRUSTED_HOST="${SWETRACE_MINI_PIP_TRUSTED_HOST:-pypi.tuna.tsinghua.edu.cn}"
 HTTP_PROXY_VALUE="${HTTP_PROXY:-${http_proxy:-}}"
@@ -70,6 +71,6 @@ PYTHON="${SWETRACE_PYTHON:-.venv/bin/python}"
 "${PYTHON}" -m swetrace.collect.run_task \
   --task "${TASK_FILE}" \
   --agent mini-swe-agent \
-  --out runs \
+  --out "${OUT}" \
   --command-template "${COMMAND_TEMPLATE}" \
   --timeout-seconds "${TIMEOUT_SECONDS}"

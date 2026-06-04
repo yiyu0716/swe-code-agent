@@ -71,6 +71,7 @@ def test_run_mini_smoke_uses_socksio_yolo_timeout_and_instance_metadata(tmp_path
     assert completed.returncode == 0, completed.stderr
     python_args = (calls_dir / "python_args.txt").read_text()
     assert "--timeout-seconds 17" in python_args
+    assert "--out /data/yiyuldx/swe/runs" in python_args
     assert "--instance sqlfluff__sqlfluff-1625" in python_args
     assert "--with socksio" in python_args
     assert "--yolo" in python_args
@@ -86,3 +87,19 @@ def test_run_mini_smoke_uses_socksio_yolo_timeout_and_instance_metadata(tmp_path
     assert task["task_id"] == "sqlfluff__sqlfluff-1625"
     assert task["repo"] == "sqlfluff/sqlfluff"
     assert "real-agent-smoke" in task["tags"]
+
+
+def test_data_scripts_default_to_data_directory() -> None:
+    expected_fragments = {
+        "scripts/run_fake.sh": 'OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+        "scripts/run_fake_batch.sh": 'OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+        "scripts/build_fake_data.sh": 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+        "scripts/auto_label_runs.sh": 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+        "scripts/download_swebench_lite.sh": 'OUT_DIR="${SWETRACE_SWEBENCH_CACHE:-/data/yiyuldx/swe/cache/swebench_lite}"',
+        "scripts/select_swebench_tasks.sh": 'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
+        "scripts/prepare_swebench_images.sh": 'TASKS="${SWETRACE_TASKS:-/data/yiyuldx/swe/outputs/tasks/swebench_lite_dev.jsonl}"',
+        "scripts/build_review_queue.sh": '--runs "${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+    }
+
+    for path, fragment in expected_fragments.items():
+        assert fragment in (REPO_ROOT / path).read_text()

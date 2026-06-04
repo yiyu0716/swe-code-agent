@@ -1,6 +1,39 @@
 # SWE-Trace Handoff
 
-Last updated: 2026-06-04 07:29 UTC
+Last updated: 2026-06-04 14:05 UTC
+
+## Current Machine Status
+
+Current repository root:
+
+```bash
+/home/yiyuldx/swe
+```
+
+Large/generated data root:
+
+```bash
+/data/yiyuldx/swe
+```
+
+Keep `/home/yiyuldx/swe` for source code and lightweight docs only. Put downloaded datasets,
+run artifacts, generated datasets, task selections, image manifests, and manual review queues under
+`/data/yiyuldx/swe`.
+
+Current Python environment:
+
+```bash
+/home/yiyuldx/birdNet/.venv
+```
+
+Current verified status:
+
+```text
+26 passed
+```
+
+Docker is installed and reachable. In this Codex process, wrap Docker commands with `sg docker -c`
+because the shell process predates the docker group refresh.
 
 ## Project Positioning
 
@@ -134,7 +167,7 @@ Observed mini-SWE-agent version in the original environment:
 Smoke command once Docker is available:
 
 ```bash
-SWETRACE_MINI_SUBSET=/root/swe/cache/swebench_lite \
+SWETRACE_MINI_SUBSET=/data/yiyuldx/swe/cache/swebench_lite \
 SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 \
 ./scripts/run_mini_smoke.sh
 ```
