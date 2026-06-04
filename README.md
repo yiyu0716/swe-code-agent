@@ -166,9 +166,10 @@ SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_qu
 
 Current real-run status:
 
-- 12 unique SWE-bench Lite dev task IDs have been attempted.
-- 13 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
-- `/data/yiyuldx/swe/outputs/datasets` currently contains 18 SFT-plan rows, 12 SFT-patch rows, 12 SFT-debug rows, 18 reward logs, and 11 gold-vs-agent DPO pairs.
+- 18 unique SWE-bench Lite dev task IDs have been attempted.
+- 19 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
+- The current pvlib and astroid dev candidates have been collected.
+- `/data/yiyuldx/swe/outputs/datasets` currently contains 24 SFT-plan rows, 18 SFT-patch rows, 18 SFT-debug rows, 24 reward logs, and 17 gold-vs-agent DPO pairs.
 - The adapter preserves partial trajectories when the outer command times out.
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
 Current broader-batch note: Docker image pulls are now stored on `/data`; network/registry

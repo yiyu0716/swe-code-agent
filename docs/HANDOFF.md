@@ -132,13 +132,14 @@ Failure taxonomy and rule-based auto-labeling exist, including environment failu
 
 Current generated data is under `/data/yiyuldx/swe`:
 
-- 18 normalized reports in `/data/yiyuldx/swe/runs`.
-- 17 mini-SWE-agent reports plus 1 fake baseline.
-- 13 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
-- 12 unique SWE-bench Lite task IDs attempted.
-- 12 agent patch artifacts.
-- 17 manual review queue items.
-- Dataset rows: SFT plan 18, SFT patch 12, SFT debug 12, reward logs 18, DPO pairs 11.
+- 24 normalized reports in `/data/yiyuldx/swe/runs`.
+- 23 mini-SWE-agent reports plus 1 fake baseline.
+- 19 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
+- 18 unique SWE-bench Lite task IDs attempted.
+- 18 agent patch artifacts.
+- 23 manual review queue items.
+- Dataset rows: SFT plan 24, SFT patch 18, SFT debug 18, reward logs 24, DPO pairs 17.
+- Current pvlib and astroid dev candidates have been collected.
 
 These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
 
@@ -265,7 +266,7 @@ http://<server-ip>:20038/
 
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
-3. Pre-pull another 5-10 SWE-bench Lite dev images with `scripts/prepare_swebench_images.sh`, favoring remaining pvlib/astroid/pydicom tasks.
+3. Pre-pull another 5-10 SWE-bench Lite dev images with `scripts/prepare_swebench_images.sh`, favoring pydicom/pyvista or any remaining unattempted dev tasks.
 4. Run additional mini-SWE-agent tasks with DeepSeek and local SWE-bench parquet.
 5. Run `recover_mini_runs.sh`, `enrich_swebench_run_tasks.sh`, `build_fake_data.sh`, `auto_label_runs.sh`, and `build_review_queue.sh`.
 6. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.

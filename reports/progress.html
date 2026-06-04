@@ -130,23 +130,23 @@
     <section class="grid" aria-label="项目指标">
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">18</span>
-        <p>17 个 mini-SWE-agent reports + 1 个 fake baseline；13 条 raw mini 轨迹已标准化</p>
+        <span class="metric">24</span>
+        <p>23 个 mini-SWE-agent reports + 1 个 fake baseline；19 条 raw mini 轨迹已标准化</p>
       </div>
       <div class="card">
         <h3>自动标签</h3>
-        <span class="metric">18</span>
-        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 17 条</p>
+        <span class="metric">24</span>
+        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 23 条</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
-        <span class="metric">42</span>
-        <p>plan 18 / patch 12 / debug 12；目标：500+</p>
+        <span class="metric">60</span>
+        <p>plan 24 / patch 18 / debug 18；目标：500+</p>
       </div>
       <div class="card">
         <h3>DPO Pairs</h3>
-        <span class="metric">11</span>
-        <p>基于 SWE-bench gold patch 与 agent 失败 patch 生成；reward logs 18 条</p>
+        <span class="metric">17</span>
+        <p>基于 SWE-bench gold patch 与 agent 失败 patch 生成；reward logs 24 条</p>
       </div>
     </section>
 
@@ -160,13 +160,13 @@
         <code>scripts/check_docker.sh</code> 通过 <code>sg docker</code> 可连到 daemon；
         SWE-bench Lite parquet 已缓存到 <code>/data/yiyuldx/swe/cache</code>。Docker <code>data-root</code>
         已迁移到 <code>/data/yiyuldx/docker</code>，后续镜像层不再挤占根分区。
-        mini-SWE-agent 已进入 Docker testbed 启动阶段，并已拉取多个 sqlfluff/marshmallow/pvlib SWE-bench testbed 镜像。
+        mini-SWE-agent 已进入 Docker testbed 启动阶段，并已拉取多个 sqlfluff/marshmallow/pvlib/astroid SWE-bench testbed 镜像。
         DeepSeek 小任务连通性失败的根因是 <code>uvx</code> 临时环境缺少 <code>socksio</code>；
         脚本已改为通过 <code>uvx --with socksio</code> 启动 mini-SWE-agent，并补上
         <code>--yolo</code>、timeout、正确 SWE-bench instance metadata、容器内代理与清华 PyPI 源。
-        当前已覆盖 12 个 unique SWE-bench Lite dev task id；13 条 raw mini 轨迹已标准化。
+        当前已覆盖 18 个 unique SWE-bench Lite dev task id；19 条 raw mini 轨迹已标准化。
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
-        已形成真实采集到训练数据的最小闭环。下一步继续扩展 pvlib/astroid/pydicom 等 repo，并做人审标签质检。
+        已形成真实采集到训练数据的最小闭环。下一步继续扩展 pydicom/pyvista 等未跑 repo，并做人审标签质检。
       </p>
     </section>
 
@@ -361,7 +361,7 @@
           <span class="badge done">完成</span>
           <div>
             <h3>批跑后数据重建</h3>
-            <p>当前 <code>/data/yiyuldx/swe/outputs/datasets</code>：SFT plan 18、patch 12、debug 12，reward logs 18，DPO pairs 11；自动标签覆盖 18 个标准化 run。</p>
+            <p>当前 <code>/data/yiyuldx/swe/outputs/datasets</code>：SFT plan 24、patch 18、debug 18，reward logs 24，DPO pairs 17；自动标签覆盖 24 个标准化 run。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -409,7 +409,7 @@
           <span class="badge done">完成</span>
           <div>
             <h3>DPO 偏好样本</h3>
-            <p><code>build_from_runs</code> 现在输出 <code>dpo_pairs.jsonl</code>，用 SWE-bench gold patch 作为 chosen、agent 失败 patch 作为 rejected；当前已有 11 条真实偏好样本。</p>
+            <p><code>build_from_runs</code> 现在输出 <code>dpo_pairs.jsonl</code>，用 SWE-bench gold patch 作为 chosen、agent 失败 patch 作为 rejected；当前已有 17 条真实偏好样本。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -425,7 +425,15 @@
           <span class="badge done">完成</span>
           <div>
             <h3>pvlib 真实任务扩展</h3>
-            <p>新增拉取并运行 <code>pvlib__pvlib-python-1707</code>、<code>1072</code>、<code>1606</code>、<code>1854</code> 四个 SWE-bench Lite dev tasks，均生成真实 mini-SWE-agent 轨迹和失败 patch，可用于 debug/reward/DPO 数据。</p>
+            <p>新增拉取并运行 <code>pvlib__pvlib-python-1707</code>、<code>1072</code>、<code>1606</code>、<code>1854</code>、<code>1154</code> 五个 SWE-bench Lite dev tasks，均生成真实 mini-SWE-agent 轨迹和失败 patch，可用于 debug/reward/DPO 数据。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>astroid 真实任务扩展</h3>
+            <p>新增拉取并运行 <code>pylint-dev__astroid-1978</code>、<code>1333</code>、<code>1196</code>、<code>1866</code>、<code>1268</code> 五个 SWE-bench Lite dev tasks；新 repo 路径已打通，轨迹均进入训练数据构建链路。</p>
           </div>
           <span>2026-06-05</span>
         </div>
@@ -435,7 +443,7 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>继续预拉取剩余 pvlib、astroid、pydicom testbed 镜像，避免 <code>docker run</code> 的 120 秒启动窗口被下载耗尽。</li>
+        <li>继续预拉取 pydicom、pyvista 或其他未跑 testbed 镜像，避免 <code>docker run</code> 的 120 秒启动窗口被下载耗尽。</li>
         <li>人工复核 <code>/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl</code>，校正自动标签。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
