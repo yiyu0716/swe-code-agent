@@ -88,8 +88,8 @@ SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 \
 Current smoke status: mini-SWE-agent 2.3.0 starts successfully through `uvx` with `socksio`.
 The Hugging Face dataset access issue is bypassed by downloading parquet files through
 `hf-mirror.com` and passing the local cache as `--subset`. Docker is reachable through
-`sg docker` in the current Codex process, and real sqlfluff/marshmallow SWE-bench Lite
-trajectories have been collected with DeepSeek via LiteLLM.
+`sg docker` in the current Codex process, and real sqlfluff/marshmallow/pvlib/astroid/
+pyvista/pydicom SWE-bench Lite trajectories have been collected with DeepSeek via LiteLLM.
 
 ## Data Layout
 
@@ -166,14 +166,14 @@ SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_qu
 
 Current real-run status:
 
-- 18 unique SWE-bench Lite dev task IDs have been attempted.
-- 19 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
-- The current pvlib and astroid dev candidates have been collected.
-- `/data/yiyuldx/swe/outputs/datasets` currently contains 24 SFT-plan rows, 18 SFT-patch rows, 18 SFT-debug rows, 24 reward logs, and 17 gold-vs-agent DPO pairs.
+- 24 unique mini-SWE-agent task IDs have been attempted.
+- 25 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
+- The current SWE-bench Lite dev candidates are exhausted when skipping existing runs.
+- `/data/yiyuldx/swe/outputs/datasets` currently contains 30 SFT-plan rows, 24 SFT-patch rows, 24 SFT-debug rows, 30 reward logs, and 23 gold-vs-agent DPO pairs.
 - The adapter preserves partial trajectories when the outer command times out.
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
-Current broader-batch note: Docker image pulls are now stored on `/data`; network/registry
-speed is the main limiter for expanding into more repos.
+Current broader-batch note: Docker image pulls are now stored on `/data`; the next useful
+step is reviewing labels and patch quality before expanding into larger train/test pools.
 
 ## Local Progress Report
 

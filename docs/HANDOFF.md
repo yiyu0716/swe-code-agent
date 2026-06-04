@@ -1,6 +1,6 @@
 # SWE-Trace Handoff
 
-Last updated: 2026-06-04 22:45 CST
+Last updated: 2026-06-05 02:14 CST
 
 ## Current Machine Status
 
@@ -132,14 +132,14 @@ Failure taxonomy and rule-based auto-labeling exist, including environment failu
 
 Current generated data is under `/data/yiyuldx/swe`:
 
-- 24 normalized reports in `/data/yiyuldx/swe/runs`.
-- 23 mini-SWE-agent reports plus 1 fake baseline.
-- 19 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
-- 18 unique SWE-bench Lite task IDs attempted.
-- 18 agent patch artifacts.
-- 23 manual review queue items.
-- Dataset rows: SFT plan 24, SFT patch 18, SFT debug 18, reward logs 24, DPO pairs 17.
-- Current pvlib and astroid dev candidates have been collected.
+- 30 normalized reports in `/data/yiyuldx/swe/runs`.
+- 29 mini-SWE-agent reports plus 1 fake baseline.
+- 25 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
+- 24 unique mini-SWE-agent task IDs attempted.
+- 24 agent patch artifacts.
+- 29 manual review queue items.
+- Dataset rows: SFT plan 30, SFT patch 24, SFT debug 24, reward logs 30, DPO pairs 23.
+- Current SWE-bench Lite dev candidates are exhausted after collecting sqlfluff, marshmallow, pvlib, astroid, pyvista, and pydicom tasks.
 
 These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
 
@@ -203,8 +203,9 @@ The cache directory is ignored by git and is not required in the source package.
 
 Docker works and its data root is on `/data/yiyuldx/docker`. The root filesystem remains
 near full because the old `/var/lib/docker` copy has not been removed yet, but new Docker
-layers now land on `/data`. The main limiter for more SWE-bench tasks is registry/network
-speed while pulling new repo images.
+layers now land on `/data`. The local SWE-bench Lite dev split has no remaining unattempted
+tasks when skipping existing runs. The next limiter is data quality: review labels, patch
+quality, and train/eval inclusion decisions before expanding to larger splits.
 
 Docker preflight:
 
@@ -266,10 +267,10 @@ http://<server-ip>:20038/
 
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
-3. Pre-pull another 5-10 SWE-bench Lite dev images with `scripts/prepare_swebench_images.sh`, favoring pydicom/pyvista or any remaining unattempted dev tasks.
-4. Run additional mini-SWE-agent tasks with DeepSeek and local SWE-bench parquet.
-5. Run `recover_mini_runs.sh`, `enrich_swebench_run_tasks.sh`, `build_fake_data.sh`, `auto_label_runs.sh`, and `build_review_queue.sh`.
-6. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
+3. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
+4. Add a lightweight review/annotation CLI that records human labels, patch quality, and train/eval inclusion decisions under `/data/yiyuldx/swe/outputs/reports`.
+5. Use the reviewed data to write a first data quality report and update filtering rules.
+6. Optionally expand beyond Lite dev after the review loop is useful.
 7. Keep updating `reports/progress.html` and push GitHub.
 
 ## Git and Commit Requirements
@@ -311,4 +312,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is expanding real SWE-bench Lite collection after resolving Docker storage, then reviewing labels and improving data quality.
+Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is reviewing labels and patch quality, then adding a lightweight annotation path so the collected real trajectories become usable training/debug data.
