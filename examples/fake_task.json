@@ -1,0 +1,11 @@
+{
+  "task_id": "fake-python-bug-001",
+  "source": "fake",
+  "repo": "example/repo",
+  "base_commit": "0000000000000000000000000000000000000000",
+  "issue_text": "Fix an off-by-one bug in add_one.",
+  "test_command": "pytest tests/test_math.py",
+  "expected_files": ["src/math_utils.py"],
+  "difficulty": "easy",
+  "tags": ["bugfix", "unit-test"]
+}

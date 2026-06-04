@@ -118,7 +118,7 @@
 </head>
 <body>
   <header>
-    <span class="status">基础设施已同步</span>
+    <span class="status">MVP 雏形已跑通</span>
     <h1>SWE-Trace 项目进展</h1>
     <p class="subtitle">
       面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
@@ -130,8 +130,8 @@
     <section class="grid" aria-label="项目指标">
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">0</span>
-        <p>目标：50+</p>
+        <span class="metric">3</span>
+        <p>当前：fake runs；目标：50+ 真实 runs</p>
       </div>
       <div class="card">
         <h3>人工标签</h3>
@@ -140,22 +140,22 @@
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
-        <span class="metric">0</span>
-        <p>目标：500+</p>
+        <span class="metric">9</span>
+        <p>SFT-plan / patch / debug；目标：500+</p>
       </div>
       <div class="card">
         <h3>DPO Pairs</h3>
         <span class="metric">0</span>
-        <p>目标：200+</p>
+        <p>DPO builder 已有；需真实成功/失败 pairs</p>
       </div>
     </section>
 
     <section class="section">
       <h2>当前结论</h2>
       <p>
-        项目采用两周冲刺设计：先跑通可回放 artifacts 链路，再接入真实 Code Agent，
-        之后做失败标注、数据构造和 LoRA 验证。GitHub 仓库已完成首次同步；
-        本地汇报页服务在 20037、20038、8888 三个端口提供备选入口。
+        当前已跑通第一版可复盘链路：schema、RunStore、fake adapter、单任务 CLI、批任务 CLI、
+        summary metrics、failure taxonomy、SFT/reward 数据导出。下一步接入 mini-SWE-agent，
+        把 fake runs 替换为真实 SWE-bench Lite / 自建任务 runs。
       </p>
     </section>
 
@@ -186,15 +186,31 @@
           </div>
           <span>2026-06-04</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>项目雏形链路</h3>
+            <p>实现 schema、RunStore、fake adapter、run_task、run_batch、metrics、taxonomy 和数据构造 CLI。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>测试与本地验收</h3>
+            <p><code>pytest</code> 通过 12 个测试；fake batch 生成 3 个 run artifacts，导出 9 条 SFT 样本和 3 条 reward logs。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>搭建 SWE-Trace 代码骨架：schema、RunStore、fake adapter、CLI。</li>
-        <li>每次工程推进后更新本页并同步 GitHub。</li>
-        <li>如果外部访问某个端口失败，优先尝试 <code>20037</code>、<code>20038</code>、<code>8888</code> 中的其他入口。</li>
+        <li>接入 <code>mini-swe-agent</code> 或 SWE-agent，先跑 5-10 个真实任务。</li>
+        <li>扩展 artifact parser：raw log、patch.diff、test.log、trajectory.jsonl。</li>
+        <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>
     </section>
   </main>
