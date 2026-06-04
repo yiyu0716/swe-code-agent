@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWE-Trace 项目进展</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #657083;
+      --line: #dfe4ea;
+      --accent: #1769aa;
+      --accent-soft: #e7f1fb;
+      --ok: #168a4a;
+      --warn: #b26a00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 28px 32px;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 19px; margin-bottom: 12px; }
+    h3 { font-size: 15px; margin-bottom: 6px; }
+    p { margin: 8px 0 0; color: var(--muted); }
+    .subtitle { max-width: 860px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .card, .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card { padding: 16px; }
+    .metric {
+      display: block;
+      font-size: 28px;
+      font-weight: 720;
+      color: var(--accent);
+      margin-top: 6px;
+    }
+    .section {
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 650;
+      font-size: 13px;
+    }
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .item {
+      display: grid;
+      grid-template-columns: 100px 1fr 120px;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+    .badge {
+      width: max-content;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eef2f6;
+      color: var(--muted);
+    }
+    .done { color: var(--ok); }
+    .doing { color: var(--warn); }
+    ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
+    code {
+      background: #eef2f6;
+      border-radius: 5px;
+      padding: 2px 5px;
+      color: #253449;
+    }
+    @media (max-width: 820px) {
+      header { padding: 22px 20px; }
+      main { padding: 16px; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .item { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="status">初始化阶段</span>
+    <h1>SWE-Trace 项目进展</h1>
+    <p class="subtitle">
+      面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
+      本页会在每次项目推进后更新，可从本地电脑打开。
+    </p>
+  </header>
+
+  <main>
+    <section class="grid" aria-label="项目指标">
+      <div class="card">
+        <h3>真实 Runs</h3>
+        <span class="metric">0</span>
+        <p>目标：50+</p>
+      </div>
+      <div class="card">
+        <h3>人工标签</h3>
+        <span class="metric">0</span>
+        <p>目标：80+</p>
+      </div>
+      <div class="card">
+        <h3>SFT 样本</h3>
+        <span class="metric">0</span>
+        <p>目标：500+</p>
+      </div>
+      <div class="card">
+        <h3>DPO Pairs</h3>
+        <span class="metric">0</span>
+        <p>目标：200+</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>当前结论</h2>
+      <p>
+        项目采用两周冲刺设计：先跑通可回放 artifacts 链路，再接入真实 Code Agent，
+        之后做失败标注、数据构造和 LoRA 验证。GitHub 同步会只提交源码、文档和可复现配置。
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>本轮进展</h2>
+      <div class="timeline">
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>本地汇报页初始化</h3>
+            <p>创建 <code>reports/progress.html</code>，后续每次进展更新此页面。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge doing">进行中</span>
+          <div>
+            <h3>GitHub 同步初始化</h3>
+            <p>准备初始化 git 仓库，绑定 <code>yiyu0716/swe-code-agent</code> 远端。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>下一步</h2>
+      <ul>
+        <li>初始化 git，并首次提交 README、.gitignore、HTML 汇报页。</li>
+        <li>启动本地静态服务，监听 <code>0.0.0.0:20038</code>。</li>
+        <li>搭建 SWE-Trace 代码骨架：schema、RunStore、fake adapter、CLI。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
