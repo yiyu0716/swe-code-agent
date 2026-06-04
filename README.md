@@ -89,6 +89,16 @@ dataset access issue can be bypassed by downloading the parquet files through `h
 and passing the local cache as `--subset`. The next external blocker is Docker image startup for
 the SWE-bench evaluation container.
 
+Check whether the current machine can run SWE-bench Docker testbeds:
+
+```bash
+./scripts/check_docker.sh
+```
+
+Current environment status: Docker is not available in this container (`docker` binary missing,
+`/var/run/docker.sock` missing). Real SWE-bench execution needs a machine with Docker installed
+or a mounted Docker socket.
+
 ## Local Progress Report
 
 The progress page is generated at:
