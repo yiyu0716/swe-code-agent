@@ -71,3 +71,74 @@ def test_build_data_cli_exports_sft_and_reward_logs(tmp_path) -> None:
     assert payload["sft_plan"] == 1
     assert (tmp_path / "datasets" / "sft_plan.jsonl").exists()
     assert (tmp_path / "datasets" / "reward_logs.jsonl").exists()
+
+
+def test_build_data_cli_exports_gold_dpo_pairs_for_failed_real_patches(tmp_path) -> None:
+    run_dir = tmp_path / "runs" / "run-1"
+    run_dir.mkdir(parents=True)
+    (run_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "task_id": "task-1",
+                "source": "swebench_lite",
+                "repo": "owner/repo",
+                "base_commit": "abc123",
+                "issue_text": "Fix a real bug.",
+                "test_command": "mini-swe-agent managed evaluation",
+                "gold_patch": "gold patch",
+            }
+        )
+    )
+    (run_dir / "trajectory.jsonl").write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "task_id": "task-1",
+                "step_id": 1,
+                "phase": "plan",
+                "model_output": "Inspect the failing behavior.",
+            }
+        )
+        + "\n"
+    )
+    (run_dir / "patch.diff").write_text("agent patch")
+    (run_dir / "test.log").write_text("1 failed\n")
+    (run_dir / "report.json").write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "task_id": "task-1",
+                "agent": "mini-swe-agent",
+                "status": "failed",
+                "patch_apply": True,
+                "tests_passed": False,
+                "resolved": False,
+            }
+        )
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.data_builder.build_from_runs",
+            "--runs",
+            str(tmp_path / "runs"),
+            "--out",
+            str(tmp_path / "datasets"),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["dpo_pairs"] == 1
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "datasets" / "dpo_pairs.jsonl").read_text().splitlines()
+    ]
+    assert rows[0]["chosen"] == "gold patch"
+    assert rows[0]["rejected"] == "agent patch"

@@ -1,6 +1,6 @@
 # SWE-Trace Handoff
 
-Last updated: 2026-06-04 14:05 UTC
+Last updated: 2026-06-04 22:45 CST
 
 ## Current Machine Status
 
@@ -29,7 +29,7 @@ Current Python environment:
 Current verified status:
 
 ```text
-26 passed
+30 passed
 ```
 
 Docker is installed and reachable. In this Codex process, wrap Docker commands with `sg docker -c`
@@ -53,31 +53,26 @@ The key positioning is not "build another coding agent from scratch". The sharpe
 
 ## Current State
 
-Repository root:
-
-```bash
-/root/swe
-```
-
 GitHub repository:
 
 ```text
 https://github.com/yiyu0716/swe-code-agent.git
 ```
 
-Latest known commit before this handoff:
-
-```text
-1905510 Document Docker preflight blocker
-```
-
-Local Python environment on the original machine:
+Current branch status should be checked with:
 
 ```bash
-/root/swe/.venv
+git status --short --branch
+git log --oneline -1
 ```
 
-Do not rely on the original `.venv` after migration. Recreate it on the target machine.
+Local Python environment:
+
+```bash
+/home/yiyuldx/birdNet/.venv
+```
+
+Do not commit virtualenvs, credentials, or generated run data.
 
 ## Implemented MVP
 
@@ -102,6 +97,8 @@ python -m swetrace.collect.run_task
 python -m swetrace.collect.run_batch
 python -m swetrace.data_builder.build_from_runs
 python -m swetrace.labeling.auto_label_runs
+python -m swetrace.collect.recover_mini_runs
+python -m swetrace.collect.enrich_swebench_run_tasks
 ```
 
 Scripts:
@@ -113,6 +110,8 @@ Scripts:
 ./scripts/auto_label_runs.sh
 ./scripts/run_mini_smoke.sh
 ./scripts/download_swebench_lite.sh
+./scripts/recover_mini_runs.sh
+./scripts/enrich_swebench_run_tasks.sh
 ./scripts/check_docker.sh
 ./scripts/serve_progress.sh
 ```
@@ -123,25 +122,24 @@ Data builders already exist for:
 - SFT patch samples
 - SFT debug samples
 - DPO pairs
+- Gold-patch vs agent-patch DPO pairs for SWE-bench tasks
 - Reward logs
 
 Failure taxonomy and rule-based auto-labeling exist, including environment failures such as dataset download and Docker/container errors.
 
-## Verified Status
+## Verified Data Status
 
-Last verified before packaging:
+Current generated data is under `/data/yiyuldx/swe`:
 
-```bash
-/root/swe/.venv/bin/python -m pytest -q
-```
+- 14 normalized reports in `/data/yiyuldx/swe/runs`.
+- 13 mini-SWE-agent reports plus 1 fake baseline.
+- 9 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
+- 8 unique SWE-bench Lite task IDs attempted.
+- 8 agent patch artifacts.
+- 13 manual review queue items.
+- Dataset rows: SFT plan 14, SFT patch 8, SFT debug 8, reward logs 14, DPO pairs 7.
 
-Expected result:
-
-```text
-19 passed
-```
-
-The fake pipeline has produced sample `runs/` and `outputs/`, but those directories are ignored by git and should be regenerated on the target machine when needed.
+These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
 
 ## mini-SWE-agent Status
 
@@ -164,7 +162,7 @@ Observed mini-SWE-agent version in the original environment:
 2.3.0
 ```
 
-Smoke command once Docker is available:
+Smoke command with Docker:
 
 ```bash
 SWETRACE_MINI_SUBSET=/data/yiyuldx/swe/cache/swebench_lite \
@@ -187,8 +185,8 @@ The mirror download script works:
 Expected local cache:
 
 ```text
-cache/swebench_lite/data/dev-00000-of-00001.parquet
-cache/swebench_lite/data/test-00000-of-00001.parquet
+/data/yiyuldx/swe/cache/swebench_lite/data/dev-00000-of-00001.parquet
+/data/yiyuldx/swe/cache/swebench_lite/data/test-00000-of-00001.parquet
 ```
 
 The local dataset was verified readable on the original machine:
@@ -201,14 +199,12 @@ The cache directory is ignored by git and is not required in the source package.
 
 ## Current Blocker
 
-Docker is not available in the original container:
+Docker works, but Docker's data root is on `/`, and the root filesystem is nearly full.
+`/data` has enough space. Do not pull many more SWE-bench images until one of these is done:
 
-- `docker` binary: missing
-- `/var/run/docker.sock`: missing
-- `podman`: missing
-- `nerdctl`: missing
-
-This blocks real SWE-bench execution because mini-SWE-agent/SWE-bench needs isolated Docker testbeds to run repository-specific tests.
+- Move Docker's `data-root` to `/data/yiyuldx/docker` with sudo/systemd changes.
+- Or get explicit user approval to prune old non-project Docker containers/images.
+- Or continue only with already-pulled sqlfluff/marshmallow images.
 
 Docker preflight:
 
@@ -216,19 +212,15 @@ Docker preflight:
 ./scripts/check_docker.sh
 ```
 
-On a usable target machine, this should find Docker, reach the daemon, and successfully run `hello-world` or the image configured via `SWETRACE_DOCKER_TEST_IMAGE`.
+On this machine, the current Codex process should wrap Docker commands with `sg docker -c`.
 
 ## Target Machine Recommendation
 
-The user's 3090 machine is a good next host.
+This host can continue once Docker storage is moved/pruned. A GPU becomes useful later for
+Qwen-Coder LoRA/QLoRA post-training, but SWE-bench collection mainly needs Docker, disk,
+CPU, RAM, and stable network/proxy.
 
-Why:
-
-- Docker availability matters more than GPU for SWE-bench execution.
-- A 3090 is useful later for Qwen-Coder LoRA/QLoRA post-training.
-- CPU, RAM, disk, and Docker daemon stability are needed for batch SWE-bench evaluation.
-
-Minimum practical target setup:
+Minimum practical setup:
 
 - Linux host or container with Docker socket access
 - Python 3.12+
@@ -239,34 +231,23 @@ Minimum practical target setup:
 
 ## Restore on Target Machine
 
-From a compressed package:
+From GitHub on this machine:
 
 ```bash
-mkdir -p /root/swe
-tar -xzf swe-code-agent-handoff-*.tar.gz -C /root/swe --strip-components=1
-cd /root/swe
+git clone https://github.com/yiyu0716/swe-code-agent.git /home/yiyuldx/swe
+cd /home/yiyuldx/swe
 ```
 
-Or from GitHub:
+Use the existing environment:
 
 ```bash
-git clone https://github.com/yiyu0716/swe-code-agent.git /root/swe
-cd /root/swe
-```
-
-Create environment:
-
-```bash
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -U pip
-.venv/bin/python -m pip install -e .
-.venv/bin/python -m pip install -U pytest datasets pyarrow
+/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q
 ```
 
 Verify:
 
 ```bash
-.venv/bin/python -m pytest -q
+/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q
 ```
 
 Serve progress report:
@@ -283,16 +264,14 @@ http://<server-ip>:20038/
 
 ## Immediate Next Steps
 
-1. Recreate the Python environment on the 3090 machine.
-2. Run the test suite.
-3. Run `./scripts/check_docker.sh`.
-4. Download SWE-bench Lite through the mirror.
-5. Run the local-subset mini-SWE-agent smoke.
-6. If Docker works and a real trajectory appears, fix any parser mismatch.
-7. Run 5-10 SWE-bench Lite dev tasks.
-8. Build SFT/debug/reward outputs from real runs.
-9. Add an annotation CLI for human failure labels.
-10. Keep updating `reports/progress.html`, commit with Lore protocol, and push to GitHub.
+1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
+2. Run `sg docker -c './scripts/check_docker.sh'`.
+3. Decide Docker storage intervention: move Docker data-root to `/data/yiyuldx/docker`, prune old non-project Docker artifacts, or stay limited to already-pulled images.
+4. After Docker storage is safe, pre-pull another 5-10 SWE-bench Lite dev images with `scripts/prepare_swebench_images.sh`.
+5. Run additional mini-SWE-agent tasks with DeepSeek and local SWE-bench parquet.
+6. Run `recover_mini_runs.sh`, `enrich_swebench_run_tasks.sh`, `build_fake_data.sh`, `auto_label_runs.sh`, and `build_review_queue.sh`.
+7. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
+8. Keep updating `reports/progress.html` and push GitHub.
 
 ## Git and Commit Requirements
 
@@ -333,4 +312,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is real mini-SWE-agent execution on SWE-bench Lite with Docker available, then parser hardening and real trajectory dataset construction.
+Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is expanding real SWE-bench Lite collection after resolving Docker storage, then reviewing labels and improving data quality.

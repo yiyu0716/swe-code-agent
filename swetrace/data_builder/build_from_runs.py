@@ -3,6 +3,7 @@ from pathlib import Path
 
 import typer
 
+from swetrace.data_builder.build_dpo_pairs import build_gold_dpo_pairs
 from swetrace.data_builder.build_reward_logs import build_reward_logs
 from swetrace.data_builder.build_sft import build_sft_debug, build_sft_patch, build_sft_plan
 from swetrace.schema import RunReport, TaskSpec, TrajectoryStep
@@ -45,22 +46,34 @@ def main(
     sft_patch = []
     sft_debug = []
     reward_logs = []
+    reports = []
+    patches_by_run = {}
+    tasks_by_run = {}
 
     for run_dir in sorted(path for path in runs.iterdir() if path.is_dir()):
         required = [run_dir / "task.json", run_dir / "trajectory.jsonl", run_dir / "report.json"]
         if not all(path.exists() for path in required):
             continue
         task, steps, patch, test_log, report = load_run(run_dir)
+        reports.append(report)
+        tasks_by_run[report.run_id] = task
         sft_plan.append(build_sft_plan(task, steps))
         if patch:
+            patches_by_run[report.run_id] = patch
             sft_patch.append(build_sft_patch(task, patch))
             sft_debug.append(build_sft_debug(task, patch, test_log))
         reward_logs.append(build_reward_logs(report))
+    dpo_pairs = build_gold_dpo_pairs(
+        tasks_by_run=tasks_by_run,
+        patches=patches_by_run,
+        reports=reports,
+    )
 
     write_jsonl(out / "sft_plan.jsonl", sft_plan)
     write_jsonl(out / "sft_patch.jsonl", sft_patch)
     write_jsonl(out / "sft_debug.jsonl", sft_debug)
     write_jsonl(out / "reward_logs.jsonl", reward_logs)
+    write_jsonl(out / "dpo_pairs.jsonl", dpo_pairs)
     typer.echo(
         json.dumps(
             {
@@ -68,6 +81,7 @@ def main(
                 "sft_patch": len(sft_patch),
                 "sft_debug": len(sft_debug),
                 "reward_logs": len(reward_logs),
+                "dpo_pairs": len(dpo_pairs),
             },
             ensure_ascii=False,
         )

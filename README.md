@@ -15,6 +15,7 @@ The first runnable skeleton is in place:
 - Single-task and batch CLIs.
 - Failure taxonomy helpers.
 - SFT-plan, SFT-patch, SFT-debug, DPO pair, and reward-log builders.
+- Gold-patch vs agent-patch DPO pair construction for SWE-bench tasks.
 - Evaluation summary metrics.
 
 ## Quickstart
@@ -155,6 +156,8 @@ sg docker -c 'HTTP_PROXY=http://10.32.192.70:7890 HTTPS_PROXY=http://10.32.192.7
 Build training/debug/reward outputs and human review queue:
 
 ```bash
+SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/recover_mini_runs.sh
+SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/enrich_swebench_run_tasks.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_fake_data.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/auto_label_runs.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_queue.sh
@@ -162,11 +165,15 @@ SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_qu
 
 Current real-run status:
 
-- 6 SWE-bench Lite dev tasks were attempted across the latest batches.
-- 5 produced real mini-SWE-agent trajectories, including one marshmallow task.
-- 1 was an environment error because `docker run` spent mini-SWE-agent's 120 second startup window pulling the image.
-- The adapter now preserves partial trajectories when the outer command times out.
+- 8 unique SWE-bench Lite dev task IDs have been attempted.
+- 9 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
+- `/data/yiyuldx/swe/outputs/datasets` currently contains 14 SFT-plan rows, 8 SFT-patch rows, 8 SFT-debug rows, 14 reward logs, and 7 gold-vs-agent DPO pairs.
+- The adapter preserves partial trajectories when the outer command times out.
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
+
+Current blocker for broader batch collection: Docker's data root is still on `/`, while `/`
+is almost full. More SWE-bench image pulls should wait until Docker's `data-root` is moved
+to `/data/yiyuldx/docker` or the user approves pruning old non-project Docker artifacts.
 
 ## Local Progress Report
 

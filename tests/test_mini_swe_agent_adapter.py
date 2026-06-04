@@ -252,3 +252,45 @@ def test_run_task_cli_supports_mini_swe_agent_with_command_template(tmp_path) ->
     payload = json.loads(completed.stdout)
     assert payload["agent"] == "mini-swe-agent"
     assert payload["status"] == "resolved"
+
+
+def test_recover_mini_runs_cli_rehydrates_existing_raw_trajectory(tmp_path) -> None:
+    run_dir = tmp_path / "runs" / "existing-run"
+    raw_dir = run_dir / "raw_mini_swe_agent"
+    raw_dir.mkdir(parents=True)
+    (run_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "task_id": "fake-mini-task",
+                "source": "swebench_lite",
+                "repo": "owner/repo",
+                "base_commit": "abc123",
+                "issue_text": "Fix add_one.",
+                "test_command": "pytest tests/test_math.py",
+            }
+        )
+    )
+    (raw_dir / "fake-mini-task.traj.json").write_text(
+        open("tests/fixtures/mini_swe_agent_success.traj.json").read()
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.collect.recover_mini_runs",
+            "--runs",
+            str(tmp_path / "runs"),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload == {"recovered_runs": 1, "skipped_runs": 0}
+    assert json.loads((run_dir / "report.json").read_text())["run_id"] == "existing-run"
+    assert (run_dir / "patch.diff").read_text().startswith("diff --git")
+    assert (run_dir / "trajectory.jsonl").read_text().count("\n") == 5

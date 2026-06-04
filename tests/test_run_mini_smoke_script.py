@@ -99,6 +99,8 @@ def test_data_scripts_default_to_data_directory() -> None:
         "scripts/select_swebench_tasks.sh": 'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
         "scripts/prepare_swebench_images.sh": 'TASKS="${SWETRACE_TASKS:-/data/yiyuldx/swe/outputs/tasks/swebench_lite_dev.jsonl}"',
         "scripts/build_review_queue.sh": '--runs "${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+        "scripts/recover_mini_runs.sh": 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
+        "scripts/enrich_swebench_run_tasks.sh": 'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
     }
 
     for path, fragment in expected_fragments.items():

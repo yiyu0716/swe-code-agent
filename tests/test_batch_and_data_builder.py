@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from swetrace.data_builder.build_dpo_pairs import build_dpo_pairs
+from swetrace.data_builder.build_dpo_pairs import build_dpo_pairs, build_gold_dpo_pairs
 from swetrace.data_builder.build_reward_logs import build_reward_logs
 from swetrace.data_builder.build_sft import build_sft_debug, build_sft_patch, build_sft_plan
 from swetrace.labeling.taxonomy import FAILURE_TAXONOMY, is_valid_failure_label
@@ -100,6 +100,39 @@ def test_dpo_builder_pairs_successful_and_failed_patches() -> None:
     assert len(pairs) == 1
     assert pairs[0]["chosen"] == "good patch"
     assert pairs[0]["rejected_meta"]["resolved"] is False
+
+
+def test_dpo_builder_pairs_gold_patch_with_failed_agent_patch() -> None:
+    task = TaskSpec(
+        task_id="task-1",
+        source="swebench_lite",
+        repo="owner/repo",
+        base_commit="abc123",
+        issue_text="Fix a real bug.",
+        test_command="mini-swe-agent managed evaluation",
+        gold_patch="gold patch",
+    )
+    rejected = RunReport(
+        run_id="rejected",
+        task_id="task-1",
+        agent="mini-swe-agent",
+        status="failed",
+        patch_apply=True,
+        tests_passed=False,
+        resolved=False,
+    )
+
+    pairs = build_gold_dpo_pairs(
+        tasks_by_run={"rejected": task},
+        patches={"rejected": "agent patch"},
+        reports=[rejected],
+    )
+
+    assert len(pairs) == 1
+    assert pairs[0]["prompt"].startswith("Issue:\nFix a real bug.")
+    assert pairs[0]["chosen"] == "gold patch"
+    assert pairs[0]["chosen_meta"]["source"] == "swebench_gold_patch"
+    assert pairs[0]["rejected"] == "agent patch"
 
 
 def test_run_batch_cli_creates_multiple_reports_and_summary(tmp_path) -> None:

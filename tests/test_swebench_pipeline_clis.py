@@ -63,6 +63,60 @@ def test_select_swebench_tasks_exports_tasks_jsonl(tmp_path) -> None:
     assert "swebench-lite" in rows[0].tags
 
 
+def test_enrich_swebench_run_tasks_backfills_gold_patch(tmp_path) -> None:
+    cache = tmp_path / "cache" / "swebench_lite" / "data"
+    cache.mkdir(parents=True)
+    table = pa.table(
+        {
+            "repo": ["sqlfluff/sqlfluff"],
+            "instance_id": ["sqlfluff__sqlfluff-1625"],
+            "base_commit": ["abc123"],
+            "patch": ["diff --git a/src/rule.py b/src/rule.py\n+++ b/src/rule.py\n"],
+            "problem_statement": ["Fix sqlfluff rule."],
+            "version": ["0.6"],
+        }
+    )
+    pq.write_table(table, cache / "dev-00000-of-00001.parquet")
+    run_dir = tmp_path / "runs" / "run-1"
+    run_dir.mkdir(parents=True)
+    (run_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "task_id": "sqlfluff__sqlfluff-1625",
+                "source": "swebench_lite",
+                "repo": "sqlfluff/sqlfluff",
+                "base_commit": "unknown",
+                "issue_text": "placeholder",
+                "test_command": "mini-swe-agent managed evaluation",
+            }
+        )
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.collect.enrich_swebench_run_tasks",
+            "--dataset",
+            str(tmp_path / "cache" / "swebench_lite"),
+            "--runs",
+            str(tmp_path / "runs"),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload == {"updated_tasks": 1, "skipped_tasks": 0}
+    task = TaskSpec.model_validate_json((run_dir / "task.json").read_text())
+    assert task.issue_text == "Fix sqlfluff rule."
+    assert task.gold_patch is not None
+    assert task.expected_files == ["src/rule.py"]
+
+
 def test_prepare_swebench_images_dry_run_writes_manifest(tmp_path) -> None:
     tasks_path = tmp_path / "tasks.jsonl"
     tasks_path.write_text(
