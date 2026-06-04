@@ -118,7 +118,7 @@
 </head>
 <body>
   <header>
-    <span class="status">真实 Smoke 已定位环境阻塞</span>
+    <span class="status">SWE-bench 数据镜像已打通</span>
     <h1>SWE-Trace 项目进展</h1>
     <p class="subtitle">
       面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
@@ -153,9 +153,10 @@
     <section class="section">
       <h2>当前结论</h2>
       <p>
-        当前已跑通第一版可复盘链路，并新增 mini-SWE-agent 适配层。真实 smoke 已调用
-        mini-SWE-agent 2.3.0，但被 Hugging Face 数据集下载阻塞；该运行已被标准化为
-        <code>env_error</code>，并自动标注为 <code>EnvironmentError.DatasetLoadFail</code>。
+        当前已跑通第一版可复盘链路，并新增 mini-SWE-agent 适配层。SWE-bench Lite
+        可通过 <code>hf-mirror.com</code> 下载 parquet 到本地，再用本地 <code>--subset</code>
+        传给 mini-SWE-agent。最新真实 smoke 已越过数据集下载，下一阻塞是 SWE-bench Docker
+        评测容器启动。
       </p>
     </section>
 
@@ -234,14 +235,30 @@
           </div>
           <span>2026-06-04</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>SWE-bench 镜像缓存</h3>
+            <p>新增 <code>scripts/download_swebench_lite.sh</code>，通过 <code>hf-mirror.com</code> 下载 dev/test parquet 并支持本地 subset。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge doing">进行中</span>
+          <div>
+            <h3>Docker 容器阻塞</h3>
+            <p>本地 parquet 可读；mini-SWE-agent 下一步卡在 <code>swebench/sweb.eval...</code> Docker 镜像/容器启动。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>解决 SWE-bench Lite 数据集下载：配置 Hugging Face 网络/缓存，或准备本地 dataset path。</li>
-        <li>数据集可用后重跑 <code>scripts/run_mini_smoke.sh</code>，确认真实 <code>*.traj.json</code> 输出。</li>
+        <li>解决 Docker 镜像拉取/容器启动问题，确认 SWE-bench testbed 能进入。</li>
+        <li>Docker 可用后重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
         <li>根据真实轨迹微调 parser，跑 5-10 个 SWE-bench Lite 任务。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>

@@ -70,10 +70,24 @@ The adapter passes `{traj_path}` as the mini-SWE-agent output file and also supp
 for custom wrappers. It then normalizes messages/tool calls into `trajectory.jsonl`, extracts
 the final patch into `patch.diff`, stores test output in `test.log`, and writes `report.json`.
 
-Current smoke status: mini-SWE-agent 2.3.0 starts successfully through `uvx`, but the first
-SWE-bench Lite smoke run is blocked by Hugging Face dataset download for
-`princeton-nlp/SWE-Bench_Lite`. SWE-Trace captures that run as `env_error` and the rule labeler
-marks it as `EnvironmentError.DatasetLoadFail` so it does not contaminate model-failure data.
+If Hugging Face dataset loading fails, cache SWE-bench Lite through the mirror:
+
+```bash
+./scripts/download_swebench_lite.sh
+```
+
+Then run a local-subset smoke:
+
+```bash
+SWETRACE_MINI_SUBSET=/root/swe/cache/swebench_lite \
+SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 \
+./scripts/run_mini_smoke.sh
+```
+
+Current smoke status: mini-SWE-agent 2.3.0 starts successfully through `uvx`. The Hugging Face
+dataset access issue can be bypassed by downloading the parquet files through `hf-mirror.com`
+and passing the local cache as `--subset`. The next external blocker is Docker image startup for
+the SWE-bench evaluation container.
 
 ## Local Progress Report
 
