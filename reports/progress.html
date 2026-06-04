@@ -155,12 +155,14 @@
       <p>
         项目已在 <code>/home/yiyuldx/swe</code> 恢复，当前使用
         <code>/home/yiyuldx/birdNet/.venv</code> 运行。迁移残留的 <code>/root/swe</code>
-        测试路径已修正为动态仓库根目录，<code>pytest</code> 当前为 19 passed。进度页已通过
+        测试路径已修正为动态仓库根目录，<code>pytest</code> 当前为 20 passed。进度页已通过
         <code>scripts/serve_progress.sh</code> 在本机启动，可从局域网浏览器访问。下一步继续检查
         Docker 能力。当前 Docker 权限已修复，<code>scripts/check_docker.sh</code> 可连到 daemon；
         SWE-bench Lite parquet 已缓存到本地。mini-SWE-agent 已进入 Docker testbed 启动阶段，
-        但拉取 <code>docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest</code>
-        时访问 Docker Hub 超时，下一步需要解决 SWE-bench 镜像拉取或导入问题。
+        并已拉取 <code>docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest</code>。
+        DeepSeek 小任务连通性失败的根因是 <code>uvx</code> 临时环境缺少 <code>socksio</code>；
+        脚本已改为通过 <code>uvx --with socksio</code> 启动 mini-SWE-agent，并补上
+        <code>--yolo</code>、timeout 和正确 SWE-bench instance metadata。
       </p>
     </section>
 
@@ -203,7 +205,7 @@
           <span class="badge done">完成</span>
           <div>
             <h3>测试与本地验收</h3>
-            <p><code>pytest</code> 已恢复到 19 passed；fake batch 生成 3 个 run artifacts，导出 9 条 SFT 样本和 3 条 reward logs。</p>
+            <p><code>pytest</code> 已恢复到 20 passed；fake batch 生成 3 个 run artifacts，导出 9 条 SFT 样本和 3 条 reward logs。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -248,10 +250,10 @@
           <span>2026-06-04</span>
         </div>
         <div class="item">
-          <span class="badge doing">进行中</span>
+          <span class="badge done">完成</span>
           <div>
             <h3>Docker 容器阻塞</h3>
-            <p>Docker 权限已修复；当前新阻塞是 Docker Hub 访问超时，SWE-bench testbed 镜像无法拉取，<code>docker pull docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest</code> 报 <code>context deadline exceeded</code>。</p>
+            <p>Docker 权限与 daemon 代理已修复；SWE-bench sqlfluff testbed 镜像已成功拉取到本机。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -296,10 +298,26 @@
           <span>2026-06-04</span>
         </div>
         <div class="item">
-          <span class="badge doing">阻塞</span>
+          <span class="badge doing">进行中</span>
           <div>
             <h3>mini-SWE-agent smoke</h3>
-            <p>已调用 mini-SWE-agent 2.3.0 并加载本地 dev split；运行到 <code>docker run</code> SWE-bench sqlfluff testbed 镜像时失败，run 状态为 <code>env_error</code>。</p>
+            <p>已调用 mini-SWE-agent 2.3.0 并加载本地 dev split；第一次真实 smoke 暂停后确认卡点转移到模型连通/交互保护，脚本已补 <code>--with socksio</code>、<code>--yolo</code> 和 timeout。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>DeepSeek 连通性修复</h3>
+            <p><code>deepseek/deepseek-chat</code> 小任务在 <code>uvx --from mini-swe-agent --with socksio</code> 下可完成 hello smoke；根因是代理链路需要 <code>socksio</code>。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>mini smoke 脚本加固</h3>
+            <p><code>scripts/run_mini_smoke.sh</code> 现在会为指定 <code>SWETRACE_MINI_INSTANCE</code> 生成正确 task metadata，并传入 <code>--yolo</code>、<code>--timeout-seconds</code> 和 <code>uvx --with socksio</code>。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -317,8 +335,7 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>解决 Docker Hub / SWE-bench 镜像拉取问题，优先尝试可用 registry mirror 或离线导入镜像。</li>
-        <li>镜像可用后重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
+        <li>用 DeepSeek 模型重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
         <li>根据真实轨迹微调 parser，跑 5-10 个 SWE-bench Lite 任务。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>

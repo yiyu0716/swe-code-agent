@@ -31,10 +31,18 @@ def main(
         None,
         help="External command template for real adapters. Supports {task_id} and {raw_dir}.",
     ),
+    timeout_seconds: int = typer.Option(
+        1800,
+        help="Timeout in seconds for external real-agent commands.",
+    ),
 ) -> None:
     task_spec = load_task(task)
     store = RunStore(out)
-    adapter = get_adapter(agent, command_template=command_template)
+    adapter = (
+        MiniSweAgentAdapter(command_template=command_template, timeout_seconds=timeout_seconds)
+        if agent == "mini-swe-agent"
+        else get_adapter(agent, command_template=command_template)
+    )
     result = adapter.run_task(task_spec, store)
     typer.echo(
         json.dumps(
