@@ -2,11 +2,17 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYTHON="${ROOT_DIR}/.venv/bin/python"
+PYTHON="${SWETRACE_PYTHON:-${ROOT_DIR}/.venv/bin/python}"
 REPORT_DIR="${ROOT_DIR}/reports"
 PORTS=(20037 20038 8888)
 
 mkdir -p "${REPORT_DIR}"
+
+if [[ ! -x "${PYTHON}" ]]; then
+  echo "Python interpreter is not executable: ${PYTHON}" >&2
+  echo "Set SWETRACE_PYTHON=/path/to/python and rerun this script." >&2
+  exit 127
+fi
 
 for port in "${PORTS[@]}"; do
   pid_file="${REPORT_DIR}/progress-${port}.pid"
@@ -33,7 +39,12 @@ for port in "${PORTS[@]}"; do
   echo "$!" > "${pid_file}"
 done
 
+HOST_IP="$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+\.' | grep -vE '^(127|169\.254|172\.17)\.' | head -n 1 || true)"
+if [[ -z "${HOST_IP}" ]]; then
+  HOST_IP="127.0.0.1"
+fi
+
 echo "Progress report servers:"
 for port in "${PORTS[@]}"; do
-  echo "  http://172.25.12.121:${port}/"
+  echo "  http://${HOST_IP}:${port}/"
 done

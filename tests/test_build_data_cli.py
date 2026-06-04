@@ -1,6 +1,9 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_build_data_cli_exports_sft_and_reward_logs(tmp_path) -> None:
@@ -57,7 +60,7 @@ def test_build_data_cli_exports_sft_and_reward_logs(tmp_path) -> None:
             "--out",
             str(tmp_path / "datasets"),
         ],
-        cwd="/root/swe",
+        cwd=REPO_ROOT,
         text=True,
         capture_output=True,
         check=False,

@@ -24,7 +24,8 @@ else
   COMMAND_TEMPLATE="${MINI_EXTRA} swebench-single --instance ${INSTANCE_ID} --subset ${SUBSET} --split ${SPLIT} --model ${MODEL} --output {traj_path} --exit-immediately"
 fi
 
-/root/swe/.venv/bin/python -m swetrace.collect.run_task \
+PYTHON="${SWETRACE_PYTHON:-.venv/bin/python}"
+"${PYTHON}" -m swetrace.collect.run_task \
   --task "${TASK_FILE}" \
   --agent mini-swe-agent \
   --out runs \

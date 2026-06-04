@@ -1,12 +1,15 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 from swetrace.data_builder.build_dpo_pairs import build_dpo_pairs
 from swetrace.data_builder.build_reward_logs import build_reward_logs
 from swetrace.data_builder.build_sft import build_sft_debug, build_sft_patch, build_sft_plan
 from swetrace.labeling.taxonomy import FAILURE_TAXONOMY, is_valid_failure_label
 from swetrace.schema import RunReport, TaskSpec, TrajectoryStep
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_taxonomy_accepts_known_labels() -> None:
@@ -135,7 +138,7 @@ def test_run_batch_cli_creates_multiple_reports_and_summary(tmp_path) -> None:
             "--summary",
             str(tmp_path / "summary.csv"),
         ],
-        cwd="/root/swe",
+        cwd=REPO_ROOT,
         text=True,
         capture_output=True,
         check=False,

@@ -1,10 +1,13 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 from swetrace.adapters.fake import FakeAdapter
 from swetrace.artifacts import RunStore
 from swetrace.schema import TaskSpec
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_fake_adapter_generates_complete_run(tmp_path) -> None:
@@ -56,7 +59,7 @@ def test_run_task_cli_writes_artifacts(tmp_path) -> None:
             "--out",
             str(tmp_path / "runs"),
         ],
-        cwd="/root/swe",
+        cwd=REPO_ROOT,
         text=True,
         capture_output=True,
         check=False,

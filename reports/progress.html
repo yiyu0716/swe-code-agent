@@ -118,7 +118,7 @@
 </head>
 <body>
   <header>
-    <span class="status">准备迁移到 3090 + Docker 环境</span>
+    <span class="status">已在本机恢复并启动进度页服务</span>
     <h1>SWE-Trace 项目进展</h1>
     <p class="subtitle">
       面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
@@ -153,12 +153,12 @@
     <section class="section">
       <h2>当前结论</h2>
       <p>
-        当前已跑通第一版可复盘链路，并新增 mini-SWE-agent 适配层。SWE-bench Lite
-        可通过 <code>hf-mirror.com</code> 下载 parquet 到本地，再用本地 <code>--subset</code>
-        传给 mini-SWE-agent。Docker 预检显示当前环境没有 <code>docker</code> 二进制，也没有
-        <code>/var/run/docker.sock</code>，因此暂时不能运行 SWE-bench testbed。当前已补充
-        <code>docs/HANDOFF.md</code> 和 <code>docs/CONTINUE_PROMPT.md</code>，准备把项目迁移到
-        3090 机器继续真实任务执行。
+        项目已在 <code>/home/yiyuldx/swe</code> 恢复，当前使用
+        <code>/home/yiyuldx/birdNet/.venv</code> 运行。迁移残留的 <code>/root/swe</code>
+        测试路径已修正为动态仓库根目录，<code>pytest</code> 当前为 19 passed。进度页已通过
+        <code>scripts/serve_progress.sh</code> 在本机启动，可从局域网浏览器访问。下一步继续检查
+        Docker 能力。当前 Docker binary 和 socket 已存在，但当前用户连接 daemon 权限不足；
+        解决 Docker 权限后再跑 SWE-bench Lite 下载、mini smoke 和真实轨迹数据构建。
       </p>
     </section>
 
@@ -201,7 +201,7 @@
           <span class="badge done">完成</span>
           <div>
             <h3>测试与本地验收</h3>
-            <p><code>pytest</code> 通过 12 个测试；fake batch 生成 3 个 run artifacts，导出 9 条 SFT 样本和 3 条 reward logs。</p>
+            <p><code>pytest</code> 已恢复到 19 passed；fake batch 生成 3 个 run artifacts，导出 9 条 SFT 样本和 3 条 reward logs。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -249,7 +249,7 @@
           <span class="badge doing">进行中</span>
           <div>
             <h3>Docker 容器阻塞</h3>
-            <p>本地 parquet 可读；当前服务器缺少 Docker CLI 和 Docker socket，无法启动 <code>swebench/sweb.eval...</code> 容器。</p>
+            <p>本机已有 <code>/usr/bin/docker</code> 和 <code>/var/run/docker.sock</code>，但当前用户连接 Docker daemon 权限不足，<code>scripts/check_docker.sh</code> 退出码为 12。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -269,14 +269,38 @@
           </div>
           <span>2026-06-04</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>本机恢复与网页部署</h3>
+            <p>在 <code>/home/yiyuldx/swe</code> 使用 <code>/home/yiyuldx/birdNet/.venv</code> 跑通 19 个测试；修正脚本 Python 路径覆盖方式并启动 20037、20038、8888 三个进度页入口。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge doing">阻塞</span>
+          <div>
+            <h3>Docker 预检复跑</h3>
+            <p><code>docker</code> CLI 与 socket 可见；daemon 访问报 <code>permission denied</code>，需要把当前用户加入 docker 组后重新登录，或用具备 Docker socket 权限的会话继续。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge doing">阻塞</span>
+          <div>
+            <h3>GitHub 同步</h3>
+            <p>本轮恢复改动已本地提交；<code>git push origin main</code> 被 HTTPS 凭据阻止，当前分支领先 <code>origin/main</code> 1 个提交。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>切换到有 Docker 的机器，或给当前环境挂载 Docker socket。</li>
-        <li>运行 <code>scripts/check_docker.sh</code>，确认 Docker daemon 和容器运行能力。</li>
+        <li>修复 Docker daemon 权限后重跑 <code>scripts/check_docker.sh</code>。</li>
+        <li>配置 GitHub HTTPS token 或 SSH remote 后推送本地提交。</li>
         <li>Docker 可用后重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
         <li>根据真实轨迹微调 parser，跑 5-10 个 SWE-bench Lite 任务。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>

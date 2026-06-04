@@ -2,6 +2,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-/root/swe/.venv/bin/python -m swetrace.data_builder.build_from_runs \
+PYTHON="${SWETRACE_PYTHON:-.venv/bin/python}"
+"${PYTHON}" -m swetrace.data_builder.build_from_runs \
   --runs runs \
   --out outputs/datasets

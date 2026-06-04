@@ -4,6 +4,7 @@ import stat
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
 from swetrace.adapters.mini_swe_agent import (
     MiniSweAgentAdapter,
@@ -12,6 +13,8 @@ from swetrace.adapters.mini_swe_agent import (
 )
 from swetrace.artifacts import RunStore
 from swetrace.schema import TaskSpec
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_parse_mini_trajectory_normalizes_messages_and_report() -> None:
@@ -176,7 +179,7 @@ def test_run_task_cli_supports_mini_swe_agent_with_command_template(tmp_path) ->
             "--command-template",
             f"{sys.executable} {runner} --instance {{task_id}} --output {{raw_dir}}",
         ],
-        cwd="/root/swe",
+        cwd=REPO_ROOT,
         text=True,
         capture_output=True,
         check=False,
