@@ -157,8 +157,10 @@
         <code>/home/yiyuldx/birdNet/.venv</code> 运行。迁移残留的 <code>/root/swe</code>
         测试路径已修正为动态仓库根目录，<code>pytest</code> 当前为 19 passed。进度页已通过
         <code>scripts/serve_progress.sh</code> 在本机启动，可从局域网浏览器访问。下一步继续检查
-        Docker 能力。当前 Docker binary 和 socket 已存在，但当前用户连接 daemon 权限不足；
-        解决 Docker 权限后再跑 SWE-bench Lite 下载、mini smoke 和真实轨迹数据构建。
+        Docker 能力。当前 Docker 权限已修复，<code>scripts/check_docker.sh</code> 可连到 daemon；
+        SWE-bench Lite parquet 已缓存到本地。mini-SWE-agent 已进入 Docker testbed 启动阶段，
+        但拉取 <code>docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest</code>
+        时访问 Docker Hub 超时，下一步需要解决 SWE-bench 镜像拉取或导入问题。
       </p>
     </section>
 
@@ -249,7 +251,7 @@
           <span class="badge doing">进行中</span>
           <div>
             <h3>Docker 容器阻塞</h3>
-            <p>本机已有 <code>/usr/bin/docker</code> 和 <code>/var/run/docker.sock</code>，但当前用户连接 Docker daemon 权限不足，<code>scripts/check_docker.sh</code> 退出码为 12。</p>
+            <p>Docker 权限已修复；当前新阻塞是 Docker Hub 访问超时，SWE-bench testbed 镜像无法拉取，<code>docker pull docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest</code> 报 <code>context deadline exceeded</code>。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -281,15 +283,31 @@
           <span class="badge doing">阻塞</span>
           <div>
             <h3>Docker 预检复跑</h3>
-            <p><code>docker</code> CLI 与 socket 可见；daemon 访问报 <code>permission denied</code>，需要把当前用户加入 docker 组后重新登录，或用具备 Docker socket 权限的会话继续。</p>
+            <p>用户已加入 <code>docker</code> 组，新终端中 daemon 可达；当前 Codex 会话可用 <code>sg docker</code> 临时继承 docker 组进行诊断。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>SWE-bench Lite 本地缓存</h3>
+            <p><code>scripts/download_swebench_lite.sh</code> 已通过 <code>hf-mirror.com</code> 下载 dev/test parquet；dev 文件约 117K，test 文件约 1.1M。</p>
           </div>
           <span>2026-06-04</span>
         </div>
         <div class="item">
           <span class="badge doing">阻塞</span>
           <div>
+            <h3>mini-SWE-agent smoke</h3>
+            <p>已调用 mini-SWE-agent 2.3.0 并加载本地 dev split；运行到 <code>docker run</code> SWE-bench sqlfluff testbed 镜像时失败，run 状态为 <code>env_error</code>。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
             <h3>GitHub 同步</h3>
-            <p>本轮恢复改动已本地提交；<code>git push origin main</code> 被 HTTPS 凭据阻止，当前分支领先 <code>origin/main</code> 1 个提交。</p>
+            <p>本轮恢复改动已推送到 <code>origin/main</code>，本地 <code>HEAD</code> 与 <code>origin/main</code> 均为 <code>851a71d</code>。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -299,9 +317,8 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>修复 Docker daemon 权限后重跑 <code>scripts/check_docker.sh</code>。</li>
-        <li>配置 GitHub HTTPS token 或 SSH remote 后推送本地提交。</li>
-        <li>Docker 可用后重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
+        <li>解决 Docker Hub / SWE-bench 镜像拉取问题，优先尝试可用 registry mirror 或离线导入镜像。</li>
+        <li>镜像可用后重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
         <li>根据真实轨迹微调 parser，跑 5-10 个 SWE-bench Lite 任务。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>
