@@ -118,7 +118,7 @@
 </head>
 <body>
   <header>
-    <span class="status">MVP 雏形已跑通</span>
+    <span class="status">真实 Agent 适配中</span>
     <h1>SWE-Trace 项目进展</h1>
     <p class="subtitle">
       面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
@@ -153,9 +153,9 @@
     <section class="section">
       <h2>当前结论</h2>
       <p>
-        当前已跑通第一版可复盘链路：schema、RunStore、fake adapter、单任务 CLI、批任务 CLI、
-        summary metrics、failure taxonomy、SFT/reward 数据导出。下一步接入 mini-SWE-agent，
-        把 fake runs 替换为真实 SWE-bench Lite / 自建任务 runs。
+        当前已跑通第一版可复盘链路，并新增 mini-SWE-agent 适配层：支持外部命令模板、
+        <code>{traj_path}</code>/<code>{raw_dir}</code> 输出占位符、<code>*.traj.json</code>
+        解析、patch/test/report 标准化。下一步是真实 SWE-bench smoke run。
       </p>
     </section>
 
@@ -202,14 +202,30 @@
           </div>
           <span>2026-06-04</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>mini-SWE-agent 适配器</h3>
+            <p>实现 <code>MiniSweAgentAdapter</code>，可解析 <code>*.traj.json</code> 并写入标准 SWE-Trace artifacts。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge doing">进行中</span>
+          <div>
+            <h3>真实 runner 依赖</h3>
+            <p>通过 <code>uvx --from mini-swe-agent mini-extra</code> 拉取 mini-SWE-agent，准备进行真实 SWE-bench smoke run。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>接入 <code>mini-swe-agent</code> 或 SWE-agent，先跑 5-10 个真实任务。</li>
-        <li>扩展 artifact parser：raw log、patch.diff、test.log、trajectory.jsonl。</li>
+        <li>完成 <code>mini-extra swebench-single</code> 真实 smoke run，确认 raw trajectory 输出格式。</li>
+        <li>根据真实轨迹微调 parser，跑 5-10 个 SWE-bench Lite 任务。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>
     </section>

@@ -1,0 +1,10 @@
+{
+  "task_id": "django__django-11099",
+  "source": "swebench_lite",
+  "repo": "django/django",
+  "base_commit": "unknown",
+  "issue_text": "SWE-bench Lite instance placeholder. The real issue text is resolved by mini-swe-agent from the benchmark instance id.",
+  "test_command": "mini-swe-agent managed evaluation",
+  "difficulty": "medium",
+  "tags": ["swebench-lite", "real-agent-smoke"]
+}

@@ -44,6 +44,26 @@ Build JSONL datasets from run artifacts:
 ./scripts/build_fake_data.sh
 ```
 
+Run a mini-SWE-agent smoke task after installing `mini-extra`:
+
+```bash
+./scripts/run_mini_smoke.sh
+```
+
+The real-agent adapter can also be driven directly with a command template:
+
+```bash
+/root/swe/.venv/bin/python -m swetrace.collect.run_task \
+  --task examples/swebench_lite_task.json \
+  --agent mini-swe-agent \
+  --out runs \
+  --command-template 'mini-extra swebench-single --instance {task_id} --model gpt-4.1-mini --output {traj_path} --exit-immediately'
+```
+
+The adapter passes `{traj_path}` as the mini-SWE-agent output file and also supports `{raw_dir}`
+for custom wrappers. It then normalizes messages/tool calls into `trajectory.jsonl`, extracts
+the final patch into `patch.diff`, stores test output in `test.log`, and writes `report.json`.
+
 ## Local Progress Report
 
 The progress page is generated at:

@@ -1,0 +1,47 @@
+{
+  "instance_id": "fake-mini-task",
+  "model": "test-model",
+  "info": {
+    "exit_status": "submitted",
+    "submission": "diff --git a/src/math_utils.py b/src/math_utils.py\n--- a/src/math_utils.py\n+++ b/src/math_utils.py\n@@\n-def add_one(x): return x\n+def add_one(x): return x + 1\n",
+    "test_output": "1 passed"
+  },
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "We need inspect the math utility."
+    },
+    {
+      "role": "assistant",
+      "content": "We should edit src/math_utils.py.",
+      "tool_calls": [
+        {
+          "function": {
+            "name": "str_replace_editor",
+            "arguments": "{\"command\":\"view\",\"path\":\"src/math_utils.py\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "def add_one(x): return x"
+    },
+    {
+      "role": "assistant",
+      "content": "Apply the fix and run tests.",
+      "tool_calls": [
+        {
+          "function": {
+            "name": "bash",
+            "arguments": "{\"cmd\":\"pytest tests/test_math.py\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "1 passed"
+    }
+  ]
+}

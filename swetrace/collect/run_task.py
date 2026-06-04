@@ -3,7 +3,7 @@ from pathlib import Path
 
 import typer
 
-from swetrace.adapters import FakeAdapter
+from swetrace.adapters import FakeAdapter, MiniSweAgentAdapter
 from swetrace.artifacts import RunStore
 from swetrace.schema import TaskSpec
 
@@ -14,9 +14,11 @@ def load_task(path: Path) -> TaskSpec:
     return TaskSpec.model_validate_json(path.read_text())
 
 
-def get_adapter(agent: str):
+def get_adapter(agent: str, command_template: str | None = None):
     if agent == "fake":
         return FakeAdapter()
+    if agent == "mini-swe-agent":
+        return MiniSweAgentAdapter(command_template=command_template)
     raise typer.BadParameter(f"Unsupported agent: {agent}")
 
 
@@ -25,10 +27,14 @@ def main(
     task: Path = typer.Option(..., exists=True, readable=True, help="Path to task JSON."),
     agent: str = typer.Option("fake", help="Adapter name."),
     out: Path = typer.Option(Path("runs"), help="Run artifact root."),
+    command_template: str | None = typer.Option(
+        None,
+        help="External command template for real adapters. Supports {task_id} and {raw_dir}.",
+    ),
 ) -> None:
     task_spec = load_task(task)
     store = RunStore(out)
-    adapter = get_adapter(agent)
+    adapter = get_adapter(agent, command_template=command_template)
     result = adapter.run_task(task_spec, store)
     typer.echo(
         json.dumps(
