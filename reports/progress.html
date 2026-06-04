@@ -130,23 +130,23 @@
     <section class="grid" aria-label="项目指标">
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">6</span>
-        <p>1 fake + 5 mini-SWE-agent attempts；其中 2 个真实轨迹已完成</p>
+        <span class="metric">11</span>
+        <p>1 fake + 10 mini-SWE-agent attempts；其中 6 个真实轨迹已完成</p>
       </div>
       <div class="card">
         <h3>自动标签</h3>
-        <span class="metric">6</span>
+        <span class="metric">11</span>
         <p>rule-based labels 已覆盖当前 runs；人工复核仍待启动</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
-        <span class="metric">12</span>
-        <p>plan 6 / patch 3 / debug 3；目标：500+</p>
+        <span class="metric">23</span>
+        <p>plan 11 / patch 6 / debug 6；目标：500+</p>
       </div>
       <div class="card">
         <h3>DPO Pairs</h3>
         <span class="metric">0</span>
-        <p>reward logs 已有 6 条；DPO pairs 需更多成功/失败对照</p>
+        <p>reward logs 已有 11 条；DPO pairs 需更多成功/失败对照</p>
       </div>
     </section>
 
@@ -163,7 +163,9 @@
         DeepSeek 小任务连通性失败的根因是 <code>uvx</code> 临时环境缺少 <code>socksio</code>；
         脚本已改为通过 <code>uvx --with socksio</code> 启动 mini-SWE-agent，并补上
         <code>--yolo</code>、timeout、正确 SWE-bench instance metadata、容器内代理与清华 PyPI 源。
-        最新 smoke 已产生真实 mini-SWE-agent 轨迹，状态为模型解题失败而非环境失败。
+        最新批次已跑 5 个 SWE-bench Lite dev tasks：4 个产生真实轨迹，1 个因 testbed 镜像自动拉取超过
+        mini-SWE-agent 的 120 秒 container timeout 标为 <code>env_error</code>。adapter 已补 timeout 保护，
+        后续长任务即使超过外层 timeout 也会保留标准 SWE-Trace artifacts。
       </p>
     </section>
 
@@ -333,8 +335,32 @@
         <div class="item">
           <span class="badge done">完成</span>
           <div>
-            <h3>真实数据构建</h3>
-            <p>基于当前 runs 重建 <code>outputs/datasets</code>：SFT plan 6、patch 3、debug 3，reward logs 6。</p>
+            <h3>第一轮真实数据构建</h3>
+            <p>第一轮真实 smoke 后重建 <code>outputs/datasets</code>：SFT plan 6、patch 3、debug 3，reward logs 6。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>SWE-bench Lite dev 批跑</h3>
+            <p>已跑 5 个 dev tasks：<code>1625</code>、<code>1733</code>、<code>1517</code>、<code>1763</code> 产生真实轨迹；<code>2419</code> 因镜像启动自动拉取超过 120 秒标为环境错误。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>timeout 产物保护</h3>
+            <p><code>MiniSweAgentAdapter</code> 已捕获外层 timeout；若已写出 <code>*.traj.json</code>，会保存 <code>trajectory.jsonl</code>、<code>patch.diff</code>、<code>test.log</code> 和 <code>stopped</code> report。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>批跑后数据重建</h3>
+            <p>当前 <code>outputs/datasets</code>：SFT plan 11、patch 6、debug 6，reward logs 11；自动标签覆盖 11 个 run。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -352,7 +378,7 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>跑 5-10 个 SWE-bench Lite dev tasks，优先选择镜像可预拉取、依赖下载稳定的实例。</li>
+        <li>先预拉取后续 SWE-bench testbed 镜像，避免 <code>docker run</code> 的 120 秒启动窗口被下载耗尽。</li>
         <li>对真实失败轨迹做人审标签，区分模型策略失败、测试误判、环境失败和 patch apply 问题。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>

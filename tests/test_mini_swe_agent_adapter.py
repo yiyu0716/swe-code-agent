@@ -150,6 +150,51 @@ def test_mini_adapter_supports_traj_path_command_template(tmp_path) -> None:
     assert (run_dir / "raw_mini_swe_agent" / "fake-mini-task.traj.json").exists()
 
 
+def test_mini_adapter_preserves_partial_trajectory_on_timeout(tmp_path) -> None:
+    fixture = tmp_path / "fixture.traj.json"
+    fixture.write_text(open("tests/fixtures/mini_swe_agent_success.traj.json").read())
+    runner = tmp_path / "slow_mini_runner.py"
+    runner.write_text(
+        textwrap.dedent(
+            f"""
+            import pathlib
+            import shutil
+            import sys
+            import time
+
+            out = pathlib.Path(sys.argv[sys.argv.index("--output") + 1])
+            out.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile({str(fixture)!r}, out)
+            print("wrote partial trajectory", flush=True)
+            time.sleep(5)
+            """
+        )
+    )
+    runner.chmod(runner.stat().st_mode | stat.S_IEXEC)
+    task = TaskSpec(
+        task_id="fake-mini-task",
+        source="swebench_lite",
+        repo="owner/repo",
+        base_commit="abc123",
+        issue_text="Fix add_one.",
+        test_command="pytest tests/test_math.py",
+    )
+    store = RunStore(tmp_path / "runs")
+    adapter = MiniSweAgentAdapter(
+        command_template=f"{os.sys.executable} {runner} --instance {{task_id}} --output {{traj_path}}",
+        timeout_seconds=1,
+    )
+
+    result = adapter.run_task(task, store)
+
+    run_dir = tmp_path / "runs" / result.run_id
+    assert result.report.status == "stopped"
+    assert result.report.stop_reason == "step_limit"
+    assert result.report.num_steps == 5
+    assert (run_dir / "trajectory.jsonl").read_text().count("\n") == 5
+    assert "timed out after 1 seconds" in (run_dir / "raw_agent.log").read_text()
+
+
 def test_run_task_cli_supports_mini_swe_agent_with_command_template(tmp_path) -> None:
     fixture = tmp_path / "fixture.traj.json"
     fixture.write_text(open("tests/fixtures/mini_swe_agent_success.traj.json").read())

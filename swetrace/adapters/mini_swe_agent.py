@@ -46,15 +46,21 @@ class MiniSweAgentAdapter(AgentAdapter):
             },
         )
 
-        completed = subprocess.run(
-            shlex.split(command),
-            cwd=Path.cwd(),
-            text=True,
-            capture_output=True,
-            timeout=self.timeout_seconds,
-            check=False,
-        )
-        raw_log = _join_logs(completed.stdout, completed.stderr)
+        timed_out = False
+        try:
+            completed = subprocess.run(
+                shlex.split(command),
+                cwd=Path.cwd(),
+                text=True,
+                capture_output=True,
+                timeout=self.timeout_seconds,
+                check=False,
+            )
+            raw_log = _join_logs(completed.stdout, completed.stderr)
+        except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            raw_log = _join_logs(_decode_timeout_output(exc.output), _decode_timeout_output(exc.stderr))
+            raw_log += f"Command timed out after {self.timeout_seconds} seconds\n"
         store.write_text(run_id, "raw_agent.log", raw_log)
 
         trajectory_path = find_trajectory_file(raw_dir, task.task_id)
@@ -63,11 +69,11 @@ class MiniSweAgentAdapter(AgentAdapter):
                 run_id=run_id,
                 task_id=task.task_id,
                 agent=self.name,
-                status="env_error",
+                status="stopped" if timed_out else "env_error",
                 patch_apply=False,
                 tests_passed=False,
                 resolved=False,
-                stop_reason="env_error",
+                stop_reason="step_limit" if timed_out else "env_error",
             )
             store.write_trajectory(run_id, [])
             store.write_text(run_id, "patch.diff", "")
@@ -77,6 +83,10 @@ class MiniSweAgentAdapter(AgentAdapter):
 
         payload = json.loads(trajectory_path.read_text())
         parsed = parse_mini_trajectory(payload, run_id=run_id, task_id=task.task_id, agent=self.name)
+        if timed_out:
+            parsed.report.status = "stopped"
+            parsed.report.resolved = False
+            parsed.report.stop_reason = "step_limit"
         store.write_trajectory(run_id, parsed.steps)
         store.write_text(run_id, "patch.diff", parsed.patch)
         store.write_text(run_id, "test.log", parsed.test_log)
@@ -275,3 +285,11 @@ def _join_logs(stdout: str, stderr: str) -> str:
     if stderr:
         parts.append(stderr)
     return "\n".join(part.rstrip("\n") for part in parts if part).rstrip("\n") + ("\n" if parts else "")
+
+
+def _decode_timeout_output(output: str | bytes | None) -> str:
+    if output is None:
+        return ""
+    if isinstance(output, bytes):
+        return output.decode(errors="replace")
+    return output
