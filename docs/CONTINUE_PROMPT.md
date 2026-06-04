@@ -26,12 +26,12 @@
 - orphan raw mini trajectory 恢复 CLI：`recover_mini_runs.sh`
 - SWE-bench parquet metadata 回填 CLI：`enrich_swebench_run_tasks.sh`
 - gold-patch vs agent-patch DPO pair 构建
-- 当前 `/data/yiyuldx/swe/outputs/datasets` 已有 SFT plan 14、patch 8、debug 8、reward 14、DPO pairs 7
+- 当前 `/data/yiyuldx/swe/outputs/datasets` 已有 SFT plan 18、patch 12、debug 12、reward 18、DPO pairs 11
 
 当前主要阻塞：
 
 - Docker 可用，但当前 Codex 进程需要用 `sg docker -c '...'` 继承 docker 组。
-- Docker data-root 仍在 `/`，根分区接近满；继续拉大量 SWE-bench 镜像前，需要把 Docker data-root 迁到 `/data/yiyuldx/docker`，或由我明确批准清理旧的非项目 Docker artifacts。
+- Docker data-root 已迁到 `/data/yiyuldx/docker`；后续拉镜像主要受网络/registry 速度限制。
 - 大文件、cache、runs、outputs 都必须放在 `/data/yiyuldx/swe`。
 
 请你不要重新设计项目，直接继续执行下一步：
@@ -43,7 +43,7 @@
 5. 然后运行：
    `SWETRACE_MINI_SUBSET=/data/yiyuldx/swe/cache/swebench_lite SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 ./scripts/run_mini_smoke.sh`
 6. 如果生成真实 `.traj.json`，检查 `trajectory.jsonl`、`patch.diff`、`test.log`、`report.json`，必要时修正 `swetrace/adapters/mini_swe_agent.py` 的 parser 并加测试。
-7. 跑更多 SWE-bench Lite dev tasks 前，先处理 Docker 存储：移动 data-root、请求我批准 prune，或只继续已拉取的 sqlfluff/marshmallow 镜像。
+7. 继续预拉取剩余 pvlib、astroid、pydicom testbed 镜像，并跑更多 SWE-bench Lite dev tasks。
 8. 每轮真实运行后执行 `recover_mini_runs.sh`、`enrich_swebench_run_tasks.sh`、`build_fake_data.sh`、`auto_label_runs.sh`、`build_review_queue.sh`。
 9. 检查 `/data/yiyuldx/swe/outputs/datasets/dpo_pairs.jsonl`、`reward_logs.jsonl` 和 `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`。
 10. 每次项目推进都更新 `/home/yiyuldx/swe/reports/progress.html`，并保持 GitHub 同步到 `https://github.com/yiyu0716/swe-code-agent.git`。

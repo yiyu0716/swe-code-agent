@@ -119,7 +119,8 @@ Check whether the current machine can run SWE-bench Docker testbeds:
 
 Current environment status: Docker is installed and reachable from a shell with the `docker`
 group. In this Codex session, use `sg docker -c '<command>'` for Docker commands because the
-process group was created before the group membership refresh.
+process group was created before the group membership refresh. Docker's data root has been
+moved to `/data/yiyuldx/docker`.
 
 ## Real SWE-bench Lite Batch Pipeline
 
@@ -165,15 +166,13 @@ SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_qu
 
 Current real-run status:
 
-- 8 unique SWE-bench Lite dev task IDs have been attempted.
-- 9 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
-- `/data/yiyuldx/swe/outputs/datasets` currently contains 14 SFT-plan rows, 8 SFT-patch rows, 8 SFT-debug rows, 14 reward logs, and 7 gold-vs-agent DPO pairs.
+- 12 unique SWE-bench Lite dev task IDs have been attempted.
+- 13 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
+- `/data/yiyuldx/swe/outputs/datasets` currently contains 18 SFT-plan rows, 12 SFT-patch rows, 12 SFT-debug rows, 18 reward logs, and 11 gold-vs-agent DPO pairs.
 - The adapter preserves partial trajectories when the outer command times out.
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
-
-Current blocker for broader batch collection: Docker's data root is still on `/`, while `/`
-is almost full. More SWE-bench image pulls should wait until Docker's `data-root` is moved
-to `/data/yiyuldx/docker` or the user approves pruning old non-project Docker artifacts.
+Current broader-batch note: Docker image pulls are now stored on `/data`; network/registry
+speed is the main limiter for expanding into more repos.
 
 ## Local Progress Report
 

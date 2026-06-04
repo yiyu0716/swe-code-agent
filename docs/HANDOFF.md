@@ -33,7 +33,8 @@ Current verified status:
 ```
 
 Docker is installed and reachable. In this Codex process, wrap Docker commands with `sg docker -c`
-because the shell process predates the docker group refresh.
+because the shell process predates the docker group refresh. Docker's `data-root` is now
+`/data/yiyuldx/docker`.
 
 ## Project Positioning
 
@@ -131,13 +132,13 @@ Failure taxonomy and rule-based auto-labeling exist, including environment failu
 
 Current generated data is under `/data/yiyuldx/swe`:
 
-- 14 normalized reports in `/data/yiyuldx/swe/runs`.
-- 13 mini-SWE-agent reports plus 1 fake baseline.
-- 9 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
-- 8 unique SWE-bench Lite task IDs attempted.
-- 8 agent patch artifacts.
-- 13 manual review queue items.
-- Dataset rows: SFT plan 14, SFT patch 8, SFT debug 8, reward logs 14, DPO pairs 7.
+- 18 normalized reports in `/data/yiyuldx/swe/runs`.
+- 17 mini-SWE-agent reports plus 1 fake baseline.
+- 13 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
+- 12 unique SWE-bench Lite task IDs attempted.
+- 12 agent patch artifacts.
+- 17 manual review queue items.
+- Dataset rows: SFT plan 18, SFT patch 12, SFT debug 12, reward logs 18, DPO pairs 11.
 
 These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
 
@@ -197,14 +198,12 @@ The local dataset was verified readable on the original machine:
 
 The cache directory is ignored by git and is not required in the source package.
 
-## Current Blocker
+## Current Limiter
 
-Docker works, but Docker's data root is on `/`, and the root filesystem is nearly full.
-`/data` has enough space. Do not pull many more SWE-bench images until one of these is done:
-
-- Move Docker's `data-root` to `/data/yiyuldx/docker` with sudo/systemd changes.
-- Or get explicit user approval to prune old non-project Docker containers/images.
-- Or continue only with already-pulled sqlfluff/marshmallow images.
+Docker works and its data root is on `/data/yiyuldx/docker`. The root filesystem remains
+near full because the old `/var/lib/docker` copy has not been removed yet, but new Docker
+layers now land on `/data`. The main limiter for more SWE-bench tasks is registry/network
+speed while pulling new repo images.
 
 Docker preflight:
 
@@ -266,12 +265,11 @@ http://<server-ip>:20038/
 
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
-3. Decide Docker storage intervention: move Docker data-root to `/data/yiyuldx/docker`, prune old non-project Docker artifacts, or stay limited to already-pulled images.
-4. After Docker storage is safe, pre-pull another 5-10 SWE-bench Lite dev images with `scripts/prepare_swebench_images.sh`.
-5. Run additional mini-SWE-agent tasks with DeepSeek and local SWE-bench parquet.
-6. Run `recover_mini_runs.sh`, `enrich_swebench_run_tasks.sh`, `build_fake_data.sh`, `auto_label_runs.sh`, and `build_review_queue.sh`.
-7. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
-8. Keep updating `reports/progress.html` and push GitHub.
+3. Pre-pull another 5-10 SWE-bench Lite dev images with `scripts/prepare_swebench_images.sh`, favoring remaining pvlib/astroid/pydicom tasks.
+4. Run additional mini-SWE-agent tasks with DeepSeek and local SWE-bench parquet.
+5. Run `recover_mini_runs.sh`, `enrich_swebench_run_tasks.sh`, `build_fake_data.sh`, `auto_label_runs.sh`, and `build_review_queue.sh`.
+6. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
+7. Keep updating `reports/progress.html` and push GitHub.
 
 ## Git and Commit Requirements
 
