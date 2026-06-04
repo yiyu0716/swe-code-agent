@@ -130,23 +130,23 @@
     <section class="grid" aria-label="项目指标">
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">4</span>
-        <p>3 fake runs + 1 mini-SWE-agent smoke；目标：50+ 真实 runs</p>
+        <span class="metric">6</span>
+        <p>1 fake + 5 mini-SWE-agent attempts；其中 2 个真实轨迹已完成</p>
       </div>
       <div class="card">
-        <h3>人工标签</h3>
-        <span class="metric">0</span>
-        <p>目标：80+</p>
+        <h3>自动标签</h3>
+        <span class="metric">6</span>
+        <p>rule-based labels 已覆盖当前 runs；人工复核仍待启动</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
-        <span class="metric">9</span>
-        <p>SFT-plan / patch / debug；目标：500+</p>
+        <span class="metric">12</span>
+        <p>plan 6 / patch 3 / debug 3；目标：500+</p>
       </div>
       <div class="card">
         <h3>DPO Pairs</h3>
         <span class="metric">0</span>
-        <p>DPO builder 已有；需真实成功/失败 pairs</p>
+        <p>reward logs 已有 6 条；DPO pairs 需更多成功/失败对照</p>
       </div>
     </section>
 
@@ -155,14 +155,15 @@
       <p>
         项目已在 <code>/home/yiyuldx/swe</code> 恢复，当前使用
         <code>/home/yiyuldx/birdNet/.venv</code> 运行。迁移残留的 <code>/root/swe</code>
-        测试路径已修正为动态仓库根目录，<code>pytest</code> 当前为 20 passed。进度页已通过
+        测试路径已修正为动态仓库根目录，<code>pytest</code> 当前为 21 passed。进度页已通过
         <code>scripts/serve_progress.sh</code> 在本机启动，可从局域网浏览器访问。下一步继续检查
-        Docker 能力。当前 Docker 权限已修复，<code>scripts/check_docker.sh</code> 可连到 daemon；
+        Docker 能力。当前 Docker 权限已修复，<code>scripts/check_docker.sh</code> 通过 <code>sg docker</code> 可连到 daemon；
         SWE-bench Lite parquet 已缓存到本地。mini-SWE-agent 已进入 Docker testbed 启动阶段，
         并已拉取 <code>docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest</code>。
         DeepSeek 小任务连通性失败的根因是 <code>uvx</code> 临时环境缺少 <code>socksio</code>；
         脚本已改为通过 <code>uvx --with socksio</code> 启动 mini-SWE-agent，并补上
-        <code>--yolo</code>、timeout 和正确 SWE-bench instance metadata。
+        <code>--yolo</code>、timeout、正确 SWE-bench instance metadata、容器内代理与清华 PyPI 源。
+        最新 smoke 已产生真实 mini-SWE-agent 轨迹，状态为模型解题失败而非环境失败。
       </p>
     </section>
 
@@ -282,10 +283,10 @@
           <span>2026-06-04</span>
         </div>
         <div class="item">
-          <span class="badge doing">阻塞</span>
+          <span class="badge done">完成</span>
           <div>
             <h3>Docker 预检复跑</h3>
-            <p>用户已加入 <code>docker</code> 组，新终端中 daemon 可达；当前 Codex 会话可用 <code>sg docker</code> 临时继承 docker 组进行诊断。</p>
+            <p>用户已加入 <code>docker</code> 组；当前 Codex 会话可用 <code>sg docker</code> 临时继承 docker 组，<code>scripts/check_docker.sh</code> 已跑通 hello-world。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -298,10 +299,10 @@
           <span>2026-06-04</span>
         </div>
         <div class="item">
-          <span class="badge doing">进行中</span>
+          <span class="badge done">完成</span>
           <div>
             <h3>mini-SWE-agent smoke</h3>
-            <p>已调用 mini-SWE-agent 2.3.0 并加载本地 dev split；第一次真实 smoke 暂停后确认卡点转移到模型连通/交互保护，脚本已补 <code>--with socksio</code>、<code>--yolo</code> 和 timeout。</p>
+            <p><code>sqlfluff__sqlfluff-1625</code> 已完成真实 smoke：run <code>20260604T125343Z-sqlfluff__sqlfluff-1625-mini-swe-agent-c42a3f00</code>，状态 <code>failed</code>，非 <code>env_error</code>。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -317,7 +318,23 @@
           <span class="badge done">完成</span>
           <div>
             <h3>mini smoke 脚本加固</h3>
-            <p><code>scripts/run_mini_smoke.sh</code> 现在会为指定 <code>SWETRACE_MINI_INSTANCE</code> 生成正确 task metadata，并传入 <code>--yolo</code>、<code>--timeout-seconds</code> 和 <code>uvx --with socksio</code>。</p>
+            <p><code>scripts/run_mini_smoke.sh</code> 现在会为指定 <code>SWETRACE_MINI_INSTANCE</code> 生成正确 task metadata，并传入 <code>--yolo</code>、timeout、<code>uvx --with socksio</code>、代理环境和默认清华 PyPI 源。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>真实轨迹 parser 修正</h3>
+            <p>mini-SWE-agent v2 轨迹的最终 patch 位于 <code>role=exit</code> 的 <code>extra.submission</code>，模型名与 token usage 位于响应 metadata；parser 已补齐这些字段。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>真实数据构建</h3>
+            <p>基于当前 runs 重建 <code>outputs/datasets</code>：SFT plan 6、patch 3、debug 3，reward logs 6。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -335,8 +352,8 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>用 DeepSeek 模型重跑本地 subset smoke，确认真实 <code>*.traj.json</code> 输出。</li>
-        <li>根据真实轨迹微调 parser，跑 5-10 个 SWE-bench Lite 任务。</li>
+        <li>跑 5-10 个 SWE-bench Lite dev tasks，优先选择镜像可预拉取、依赖下载稳定的实例。</li>
+        <li>对真实失败轨迹做人审标签，区分模型策略失败、测试误判、环境失败和 patch apply 问题。</li>
         <li>实现人工标注 CLI，并开始积累 failure labels。</li>
       </ul>
     </section>

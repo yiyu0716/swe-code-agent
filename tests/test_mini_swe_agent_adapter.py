@@ -38,6 +38,24 @@ def test_parse_mini_trajectory_normalizes_messages_and_report() -> None:
     assert parsed.steps[-1].phase == "test"
 
 
+def test_parse_real_mini_trajectory_extracts_exit_patch_and_usage() -> None:
+    payload = json.loads(open("tests/fixtures/mini_swe_agent_real_sqlfluff.traj.json").read())
+
+    parsed = parse_mini_trajectory(
+        payload=payload,
+        run_id="run-1",
+        task_id="sqlfluff__sqlfluff-1625",
+        agent="mini-swe-agent",
+    )
+
+    assert parsed.report.model == "deepseek-v4-flash"
+    assert parsed.report.token_usage.total > 0
+    assert parsed.report.num_steps == 5
+    assert parsed.report.num_tool_calls == 1
+    assert parsed.patch.startswith("diff --git a/src/sqlfluff/rules/L031.py")
+    assert parsed.steps[-1].phase == "final"
+
+
 def test_render_command_template_only_replaces_supported_placeholders() -> None:
     rendered = render_command_template(
         "runner --json '{\"keep\": true}' --instance {task_id} --output {traj_path}",

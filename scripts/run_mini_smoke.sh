@@ -18,8 +18,29 @@ MODEL="${SWETRACE_MINI_MODEL:-gpt-4.1-mini}"
 SUBSET="${SWETRACE_MINI_SUBSET:-lite}"
 SPLIT="${SWETRACE_MINI_SPLIT:-dev}"
 TIMEOUT_SECONDS="${SWETRACE_MINI_TIMEOUT_SECONDS:-1800}"
+PIP_INDEX_URL="${SWETRACE_MINI_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
+PIP_TRUSTED_HOST="${SWETRACE_MINI_PIP_TRUSTED_HOST:-pypi.tuna.tsinghua.edu.cn}"
+HTTP_PROXY_VALUE="${HTTP_PROXY:-${http_proxy:-}}"
+HTTPS_PROXY_VALUE="${HTTPS_PROXY:-${https_proxy:-}}"
 SAFE_INSTANCE_ID="${INSTANCE_ID//[^A-Za-z0-9_.-]/-}"
 TASK_FILE="${SWETRACE_MINI_TASK_FILE:-}"
+ENV_CONFIGS=(
+  "-c environment.env.PIP_INDEX_URL=${PIP_INDEX_URL}"
+  "-c environment.env.PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}"
+)
+if [[ -n "${HTTP_PROXY_VALUE}" ]]; then
+  ENV_CONFIGS+=(
+    "-c environment.env.HTTP_PROXY=${HTTP_PROXY_VALUE}"
+    "-c environment.env.http_proxy=${HTTP_PROXY_VALUE}"
+  )
+fi
+if [[ -n "${HTTPS_PROXY_VALUE}" ]]; then
+  ENV_CONFIGS+=(
+    "-c environment.env.HTTPS_PROXY=${HTTPS_PROXY_VALUE}"
+    "-c environment.env.https_proxy=${HTTPS_PROXY_VALUE}"
+  )
+fi
+ENV_CONFIG_STRING="${ENV_CONFIGS[*]}"
 
 if [[ -z "${TASK_FILE}" ]]; then
   TASK_FILE="$(mktemp "${TMPDIR:-/tmp}/swetrace-mini-task-${SAFE_INSTANCE_ID}.XXXXXX.json")"
@@ -42,7 +63,7 @@ fi
 if [[ -n "${SWETRACE_MINI_COMMAND_TEMPLATE:-}" ]]; then
   COMMAND_TEMPLATE="${SWETRACE_MINI_COMMAND_TEMPLATE}"
 else
-  COMMAND_TEMPLATE="${MINI_EXTRA} swebench-single --instance ${INSTANCE_ID} --subset ${SUBSET} --split ${SPLIT} --model ${MODEL} --output {traj_path} --yolo --exit-immediately"
+  COMMAND_TEMPLATE="${MINI_EXTRA} swebench-single --instance ${INSTANCE_ID} --subset ${SUBSET} --split ${SPLIT} --model ${MODEL} --output {traj_path} --yolo --exit-immediately -c swebench.yaml ${ENV_CONFIG_STRING}"
 fi
 
 PYTHON="${SWETRACE_PYTHON:-.venv/bin/python}"

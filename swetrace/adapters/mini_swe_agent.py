@@ -8,7 +8,7 @@ from typing import Any
 
 from swetrace.adapters.base import AgentAdapter, RunResult
 from swetrace.artifacts import RunStore
-from swetrace.schema import RunReport, TaskSpec, TrajectoryStep
+from swetrace.schema import RunReport, TaskSpec, TokenUsage, TrajectoryStep
 
 
 @dataclass(frozen=True)
@@ -95,7 +95,7 @@ def parse_mini_trajectory(
     patch = _first_text(
         info,
         ["submission", "patch", "diff", "final_patch"],
-    )
+    ) or _exit_submission(messages)
     test_log = _first_text(info, ["test_output", "test_log", "tests", "evaluation_log"])
     steps = [
         _message_to_step(message, run_id=run_id, task_id=task_id, step_id=index)
@@ -111,7 +111,7 @@ def parse_mini_trajectory(
         run_id=run_id,
         task_id=task_id,
         agent=agent,
-        model=str(payload.get("model") or info.get("model") or ""),
+        model=_model_name(payload=payload, info=info, messages=messages),
         status=status,
         patch_apply=patch_apply,
         tests_passed=tests_passed,
@@ -120,6 +120,7 @@ def parse_mini_trajectory(
         num_tool_calls=sum(1 for step in steps if step.tool_name),
         num_edit_calls=sum(1 for step in steps if step.phase == "edit"),
         num_test_calls=sum(1 for step in steps if step.phase == "test"),
+        token_usage=_token_usage(messages),
         stop_reason="final",
         final_patch_path="patch.diff",
         test_log_path="test.log",
@@ -182,6 +183,8 @@ def _infer_phase(
     role: str | None,
 ):
     haystack = f"{content} {tool_name or ''} {json.dumps(tool_args, ensure_ascii=False)}".lower()
+    if role == "exit":
+        return "final"
     if role == "tool" and ("passed" in haystack or "failed" in haystack or "pytest" in haystack):
         return "test"
     if any(word in haystack for word in ["pytest", "test", "1 passed", "failed"]):
@@ -210,6 +213,47 @@ def _first_text(payload: dict[str, Any], keys: list[str]) -> str:
         if isinstance(value, str):
             return value
     return ""
+
+
+def _exit_submission(messages: list[dict[str, Any]]) -> str:
+    for message in reversed(messages):
+        if message.get("role") != "exit":
+            continue
+        extra = message.get("extra") or {}
+        submission = extra.get("submission")
+        if isinstance(submission, str):
+            return submission
+        content = message.get("content")
+        if isinstance(content, str):
+            return content
+    return ""
+
+
+def _model_name(payload: dict[str, Any], info: dict[str, Any], messages: list[dict[str, Any]]) -> str:
+    for value in (payload.get("model"), info.get("model")):
+        if value:
+            return str(value)
+    for message in messages:
+        response = (message.get("extra") or {}).get("response") or {}
+        model = response.get("model")
+        if model:
+            return str(model)
+    config_model = ((info.get("config") or {}).get("model") or {}).get("model_name")
+    return str(config_model or "")
+
+
+def _token_usage(messages: list[dict[str, Any]]) -> TokenUsage:
+    input_tokens = 0
+    output_tokens = 0
+    total_tokens = 0
+    for message in messages:
+        usage = ((message.get("extra") or {}).get("response") or {}).get("usage") or {}
+        input_tokens += int(usage.get("prompt_tokens") or usage.get("input_tokens") or 0)
+        output_tokens += int(usage.get("completion_tokens") or usage.get("output_tokens") or 0)
+        total_tokens += int(usage.get("total_tokens") or 0)
+    if not total_tokens:
+        total_tokens = input_tokens + output_tokens
+    return TokenUsage(input=input_tokens, output=output_tokens, total=total_tokens)
 
 
 def _last_tool_result(steps: list[TrajectoryStep]) -> str:
