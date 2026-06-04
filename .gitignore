@@ -21,4 +21,5 @@ models/
 wandb/
 mlruns/
 
-reports/progress-server.log
+reports/*.log
+reports/*.pid

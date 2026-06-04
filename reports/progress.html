@@ -118,7 +118,7 @@
 </head>
 <body>
   <header>
-    <span class="status">初始化阶段</span>
+    <span class="status">基础设施已同步</span>
     <h1>SWE-Trace 项目进展</h1>
     <p class="subtitle">
       面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
@@ -154,7 +154,8 @@
       <h2>当前结论</h2>
       <p>
         项目采用两周冲刺设计：先跑通可回放 artifacts 链路，再接入真实 Code Agent，
-        之后做失败标注、数据构造和 LoRA 验证。GitHub 同步会只提交源码、文档和可复现配置。
+        之后做失败标注、数据构造和 LoRA 验证。GitHub 仓库已完成首次同步；
+        本地汇报页服务在 20037、20038、8888 三个端口提供备选入口。
       </p>
     </section>
 
@@ -165,15 +166,23 @@
           <span class="badge done">完成</span>
           <div>
             <h3>本地汇报页初始化</h3>
-            <p>创建 <code>reports/progress.html</code>，后续每次进展更新此页面。</p>
+            <p>创建 <code>reports/progress.html</code>，后续每次项目进展更新此页面。</p>
           </div>
           <span>2026-06-04</span>
         </div>
         <div class="item">
-          <span class="badge doing">进行中</span>
+          <span class="badge done">完成</span>
           <div>
             <h3>GitHub 同步初始化</h3>
-            <p>准备初始化 git 仓库，绑定 <code>yiyu0716/swe-code-agent</code> 远端。</p>
+            <p>初始化 git 仓库并推送到 <code>yiyu0716/swe-code-agent</code> 的 <code>main</code> 分支。</p>
+          </div>
+          <span>2026-06-04</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>进展页服务入口</h3>
+            <p>添加 <code>scripts/serve_progress.sh</code>，用于启动 20037、20038、8888 三个静态服务入口。</p>
           </div>
           <span>2026-06-04</span>
         </div>
@@ -183,9 +192,9 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>初始化 git，并首次提交 README、.gitignore、HTML 汇报页。</li>
-        <li>启动本地静态服务，监听 <code>0.0.0.0:20038</code>。</li>
         <li>搭建 SWE-Trace 代码骨架：schema、RunStore、fake adapter、CLI。</li>
+        <li>每次工程推进后更新本页并同步 GitHub。</li>
+        <li>如果外部访问某个端口失败，优先尝试 <code>20037</code>、<code>20038</code>、<code>8888</code> 中的其他入口。</li>
       </ul>
     </section>
   </main>
