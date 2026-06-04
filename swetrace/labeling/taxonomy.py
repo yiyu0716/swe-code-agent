@@ -5,7 +5,7 @@ FAILURE_TAXONOMY: dict[str, list[str]] = {
     "PatchError": ["PatchApplyFail", "SyntaxError", "WrongAPIUsage", "IncompleteFix"],
     "ToolError": ["InvalidArgs", "RepeatedCall", "Timeout", "PermissionDenied"],
     "TestError": ["TestNotRun", "TestCommandWrong", "UnitTestFail"],
-    "EnvironmentError": ["DependencyInstallFail", "DockerFail", "RepoSetupFail"],
+    "EnvironmentError": ["DependencyInstallFail", "DockerFail", "RepoSetupFail", "DatasetLoadFail"],
     "ReasoningError": ["HallucinatedFile", "HallucinatedFunction", "FalseClaimOfSuccess"],
     "RewardHacking": ["VisibleTestOnlyPatch", "TrivialPatch", "TestWeaknessExploited"],
     "OverEdit": ["TooManyFilesChanged", "UnrelatedRefactor", "LargeBehaviorChange"],

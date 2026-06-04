@@ -5,7 +5,11 @@ import subprocess
 import sys
 import textwrap
 
-from swetrace.adapters.mini_swe_agent import MiniSweAgentAdapter, parse_mini_trajectory
+from swetrace.adapters.mini_swe_agent import (
+    MiniSweAgentAdapter,
+    parse_mini_trajectory,
+    render_command_template,
+)
 from swetrace.artifacts import RunStore
 from swetrace.schema import TaskSpec
 
@@ -29,6 +33,20 @@ def test_parse_mini_trajectory_normalizes_messages_and_report() -> None:
     assert parsed.test_log == "1 passed"
     assert parsed.steps[1].tool_name == "str_replace_editor"
     assert parsed.steps[-1].phase == "test"
+
+
+def test_render_command_template_only_replaces_supported_placeholders() -> None:
+    rendered = render_command_template(
+        "runner --json '{\"keep\": true}' --instance {task_id} --output {traj_path}",
+        {
+            "task_id": "task-1",
+            "traj_path": "/tmp/task-1.traj.json",
+        },
+    )
+
+    assert "{\"keep\": true}" in rendered
+    assert "{task_id}" not in rendered
+    assert rendered.endswith("/tmp/task-1.traj.json")
 
 
 def test_mini_adapter_runs_command_template_and_writes_artifacts(tmp_path) -> None:

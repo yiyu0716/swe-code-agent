@@ -16,7 +16,11 @@ fi
 INSTANCE_ID="${SWETRACE_MINI_INSTANCE:-django__django-11099}"
 MODEL="${SWETRACE_MINI_MODEL:-gpt-4.1-mini}"
 TASK_FILE="${SWETRACE_MINI_TASK_FILE:-examples/swebench_lite_task.json}"
-COMMAND_TEMPLATE="${SWETRACE_MINI_COMMAND_TEMPLATE:-${MINI_EXTRA} swebench-single --instance ${INSTANCE_ID} --model ${MODEL} --output {traj_path} --exit-immediately}"
+if [[ -n "${SWETRACE_MINI_COMMAND_TEMPLATE:-}" ]]; then
+  COMMAND_TEMPLATE="${SWETRACE_MINI_COMMAND_TEMPLATE}"
+else
+  COMMAND_TEMPLATE="${MINI_EXTRA} swebench-single --instance ${INSTANCE_ID} --model ${MODEL} --output {traj_path} --exit-immediately"
+fi
 
 /root/swe/.venv/bin/python -m swetrace.collect.run_task \
   --task "${TASK_FILE}" \

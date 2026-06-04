@@ -50,6 +50,12 @@ Run a mini-SWE-agent smoke task after installing `mini-extra`:
 ./scripts/run_mini_smoke.sh
 ```
 
+If `mini-extra` is not installed globally, the script falls back to:
+
+```bash
+uvx --from mini-swe-agent mini-extra
+```
+
 The real-agent adapter can also be driven directly with a command template:
 
 ```bash
@@ -63,6 +69,11 @@ The real-agent adapter can also be driven directly with a command template:
 The adapter passes `{traj_path}` as the mini-SWE-agent output file and also supports `{raw_dir}`
 for custom wrappers. It then normalizes messages/tool calls into `trajectory.jsonl`, extracts
 the final patch into `patch.diff`, stores test output in `test.log`, and writes `report.json`.
+
+Current smoke status: mini-SWE-agent 2.3.0 starts successfully through `uvx`, but the first
+SWE-bench Lite smoke run is blocked by Hugging Face dataset download for
+`princeton-nlp/SWE-Bench_Lite`. SWE-Trace captures that run as `env_error` and the rule labeler
+marks it as `EnvironmentError.DatasetLoadFail` so it does not contaminate model-failure data.
 
 ## Local Progress Report
 

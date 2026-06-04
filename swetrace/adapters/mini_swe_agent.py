@@ -34,13 +34,16 @@ class MiniSweAgentAdapter(AgentAdapter):
         run_dir = store.run_dir(run_id)
         raw_dir = run_dir / "raw_mini_swe_agent"
         raw_dir.mkdir(parents=True, exist_ok=True)
-        command = self.command_template.format(
-            task_id=task.task_id,
-            raw_dir=str(raw_dir),
-            traj_path=str(raw_dir / f"{task.task_id}.traj.json"),
-            issue_text=shlex.quote(task.issue_text),
-            repo=task.repo,
-            test_command=shlex.quote(task.test_command),
+        command = render_command_template(
+            self.command_template,
+            {
+                "task_id": task.task_id,
+                "raw_dir": str(raw_dir),
+                "traj_path": str(raw_dir / f"{task.task_id}.traj.json"),
+                "issue_text": shlex.quote(task.issue_text),
+                "repo": task.repo,
+                "test_command": shlex.quote(task.test_command),
+            },
         )
 
         completed = subprocess.run(
@@ -132,6 +135,13 @@ def find_trajectory_file(raw_dir: Path, task_id: str) -> Path | None:
     if candidates:
         return candidates[0]
     return None
+
+
+def render_command_template(template: str, values: dict[str, str]) -> str:
+    rendered = template
+    for key, value in values.items():
+        rendered = rendered.replace("{" + key + "}", value)
+    return rendered
 
 
 def _message_to_step(message: dict[str, Any], run_id: str, task_id: str, step_id: int) -> TrajectoryStep:
