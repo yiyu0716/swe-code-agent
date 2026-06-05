@@ -190,7 +190,7 @@
 <body>
   <header>
     <h1>数据质量报告</h1>
-    <p class="subtitle">基于 <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code> 的 52 条 annotation 和 <code>/data/yiyuldx/swe/runs/*/official_eval.json</code> 的官方 SWE-bench 评测结果，对当前 SWE-Trace 初版数据做可用性、失败类型、仓库覆盖和 SFT/DPO 入选规则分析。</p>
+    <p class="subtitle">基于 <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code> 的 52 条 annotation、<code>/data/yiyuldx/swe/runs/*/official_eval.json</code> 的官方 SWE-bench 评测结果，以及 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 的 official-aware 导出，对当前 SWE-Trace 初版数据做可用性、失败类型、仓库覆盖和 SFT/DPO 入选规则分析。</p>
     <nav class="nav" aria-label="报告导航">
       <a href="index.html">报告入口</a>
       <a href="progress.html">项目进展</a>
@@ -210,25 +210,25 @@
       </div>
       <div class="metric">
         <h3>官方评测</h3>
-        <strong>42 / 48</strong>
-        <p>48 个真实非空 patch 中，42 个已完成官方 SWE-bench 评测。</p>
+        <strong>60 completed</strong>
+        <p>65 个 <code>official_eval.json</code> 中，60 个完成官方实例级 SWE-bench 评测。</p>
       </div>
       <div class="metric">
         <h3>官方 resolved</h3>
-        <strong>13</strong>
-        <p><code>13 official resolved</code>，这些是真实 SFT 正样本候选。</p>
+        <strong>19</strong>
+        <p><code>19 official resolved</code>，这些是真实 SFT 正样本来源。</p>
       </div>
       <div class="metric">
-        <h3>旧 DPO 主集</h3>
-        <strong>37</strong>
-        <p>旧人工规则中 DPO 可用 40 条、filtered v0.1 主集 37 条；需用官方结果重建。</p>
+        <h3>v0.2 训练集</h3>
+        <strong>41 DPO</strong>
+        <p><code>SFT patch 19</code>、<code>DPO main 41</code>、<code>reward logs 60</code>；还未达到训练门槛。</p>
       </div>
     </section>
 
     <section class="section">
       <h2>总览结论</h2>
-      <p>当前最重要的修正是：早期 <code>report.json</code> 里的 <code>tests_passed/resolved</code> 来自 mini-SWE-agent 退出前的轨迹日志，很多是 <code>action was not executed</code>，不能作为成功/失败标签。现在已经接入官方 SWE-bench harness：48 个真实非空 patch 中 42 个完成官方评测，13 个官方 resolved，6 个 requests run 因 <code>test_requests.py</code> 长时间挂起，暂列为待专项评测。</p>
-      <div class="note">质量结论已改变：旧 filtered DPO v0.1 可作为结构样本参考，但不能直接训练，因为其中部分 agent patch 已被官方证明 resolved，不能再当 rejected；下一版 SFT/DPO/reward 必须优先读取 <code>official_eval.json</code>。</div>
+      <p>当前最重要的修正是：早期 <code>report.json</code> 里的 <code>tests_passed/resolved</code> 来自 mini-SWE-agent 退出前的轨迹日志，很多是 <code>action was not executed</code>，不能作为成功/失败标签。现在已经接入官方 SWE-bench harness：65 个 run 写入 <code>official_eval.json</code>，其中 60 completed、19 official resolved、41 official unresolved 可进入 DPO/debug，5 个 requests run 仍 pending。</p>
+      <div class="note">质量结论已改变：旧 filtered DPO v0.1 可作为结构样本参考，但不能直接训练。当前 v0.2 已按官方结果重建：只有 official resolved 进 SFT，只有 official unresolved + gold patch 进 DPO/debug。</div>
     </section>
 
     <section class="section">
@@ -238,14 +238,14 @@
           <tr><th>项目</th><th>数量</th><th>含义</th><th>处理</th></tr>
         </thead>
         <tbody>
-          <tr><td>真实非空 patch</td><td>48</td><td>排除 fake baseline 后的 mini-SWE-agent patch。</td><td>进入官方评测候选。</td></tr>
-          <tr><td>completed</td><td>42</td><td>官方容器内成功应用 patch，并执行 gold tests 产出 <code>report.json</code>。</td><td><span class="tag ok">可信标签</span></td></tr>
-          <tr><td>resolved</td><td>13</td><td>FAIL_TO_PASS 全过且 PASS_TO_PASS 未回归。</td><td><span class="tag ok">真实 SFT 正样本候选</span></td></tr>
-          <tr><td>unresolved</td><td>29</td><td>patch 可应用但未通过官方判定。</td><td><span class="tag warn">DPO/debug 候选</span></td></tr>
-          <tr><td>requests pending</td><td>6</td><td>6 个 requests run 在 <code>test_requests.py</code> 中长时间挂起。</td><td><span class="tag warn">单独短超时/专项诊断</span></td></tr>
+          <tr><td>official_eval files</td><td>65</td><td>已写入每个 run 的官方状态文件。</td><td>作为训练筛选唯一成功/失败标签。</td></tr>
+          <tr><td>completed</td><td>60</td><td>官方容器内成功应用 patch，并执行 gold tests 产出 <code>report.json</code>。</td><td><span class="tag ok">可信标签</span></td></tr>
+          <tr><td>resolved</td><td>19</td><td>FAIL_TO_PASS 全过且 PASS_TO_PASS 未回归。</td><td><span class="tag ok">真实 SFT 正样本</span></td></tr>
+          <tr><td>unresolved</td><td>41</td><td>patch 可应用但未通过官方判定。</td><td><span class="tag warn">DPO/debug 候选</span></td></tr>
+          <tr><td>requests pending</td><td>5</td><td>5 个 requests run 仍不稳定；1 个 requests run 已完成并进入 DPO。</td><td><span class="tag warn">不阻塞主训练集</span></td></tr>
         </tbody>
       </table>
-      <div class="note">官方评测产物位置：<code>/data/yiyuldx/swe/official_eval/results/combined_pipproxy_run_status.jsonl</code> 和每个 run 目录下的 <code>official_eval.json</code>。</div>
+      <div class="note">官方评测产物位置：<code>/data/yiyuldx/swe/official_eval/results/*.jsonl</code> 和每个 run 目录下的 <code>official_eval.json</code>。当前 <code>run_official_eval.sh</code> 已按 predictions 自动过滤 dataset，避免汇总阶段访问无关仓库。</div>
     </section>
 
     <section class="section">
@@ -288,6 +288,8 @@
           <tr><td><code>pallets/flask</code></td><td>3</td><td>close 3</td><td>test split 并发扩展样本，质量较好。</td></tr>
           <tr><td><code>mwaskom/seaborn</code></td><td>2</td><td>close 2</td><td>一条作为真实 SFT sanity 候选，另一条进入 DPO/debug。</td></tr>
           <tr><td><code>pydata/xarray</code></td><td>1</td><td>partial 1</td><td>patch 命中方向但过宽，适合作边界回归类 DPO。</td></tr>
+          <tr><td><code>astropy/astropy</code></td><td>1</td><td>official unresolved</td><td>小 patch 但 FAIL_TO_PASS 未过，已进入 DPO/debug。</td></tr>
+          <tr><td><code>sphinx-doc/sphinx</code></td><td>1</td><td>official unresolved</td><td>长轨迹边界修复样本，已进入 DPO/debug。</td></tr>
           <tr><td><code>pyvista</code></td><td>1</td><td>partial 1</td><td>可用但代表性不足。</td></tr>
           <tr><td><code>django</code></td><td>1</td><td>env_only 1</td><td>环境失败，只做工程噪声记录。</td></tr>
           <tr><td><code>fake baseline</code></td><td>1</td><td>close 1</td><td>只做 SFT sanity sample，不和真实 SWE-bench 混用。</td></tr>
@@ -320,9 +322,9 @@
           <tr><th>规则</th><th>当前数量</th><th>是否入选</th><th>说明</th></tr>
         </thead>
         <tbody>
-          <tr><td>官方 resolved</td><td>13 条真实 run</td><td><span class="tag ok">入选候选</span></td><td>优先进入下一版真实 SFT 正样本池。</td></tr>
-          <tr><td>旧 sanity SFT</td><td>SFT 可用 2</td><td><span class="tag warn">仅作历史 sanity</span></td><td>旧人工规则包含 1 条 fake baseline + 1 条人工 close sanity；已被官方评测结果取代。</td></tr>
-          <tr><td>官方 unresolved 但人工 close</td><td>待重算</td><td><span class="tag warn">转 DPO/debug</span></td><td>需要排除已经 official resolved 的样本，再生成 rejected。</td></tr>
+          <tr><td>官方 resolved</td><td>19 条真实 run</td><td><span class="tag ok">已入选 v0.2</span></td><td><code>SFT patch 19</code>，只来自 official completed + patch applied + resolved。</td></tr>
+          <tr><td>旧 sanity SFT</td><td>SFT 可用 2</td><td><span class="tag warn">仅作历史 sanity</span></td><td>旧人工规则包含 fake baseline，不能混入 v0.2 真实训练集。</td></tr>
+          <tr><td>官方 unresolved 但人工 close</td><td>已按官方结果重算</td><td><span class="tag warn">转 DPO/debug</span></td><td>不再复制 agent patch 做 SFT，避免训练错误修复。</td></tr>
           <tr><td>partial / poor / empty</td><td>23 条</td><td><span class="tag bad">不入选</span></td><td>避免教模型复制不完整或错误修复。</td></tr>
           <tr><td>env_only</td><td>6 条</td><td><span class="tag bad">不入选</span></td><td>环境失败不能说明模型修代码能力。</td></tr>
         </tbody>
@@ -336,14 +338,14 @@
           <tr><th>候选集</th><th>数量</th><th>用途</th><th>建议</th></tr>
         </thead>
         <tbody>
-          <tr><td>官方 unresolved + 有 gold patch</td><td>29 条已确认</td><td>可信 rejected vs gold</td><td><span class="tag ok">下一版优先导出</span></td></tr>
-          <tr><td>旧 <code>close/partial + dpo_usable=true</code></td><td>38 条候选</td><td>人工内容判断</td><td><span class="tag warn">需扣除官方 resolved</span></td></tr>
+          <tr><td>官方 unresolved + 有 gold patch</td><td>41 条已确认</td><td>可信 rejected vs gold</td><td><span class="tag ok">已入选 v0.2</span></td></tr>
+          <tr><td>旧 <code>close/partial + dpo_usable=true</code></td><td>38 条候选</td><td>人工内容判断</td><td><span class="tag warn">仅作历史参考</span></td></tr>
           <tr><td><code>poor</code> 且 <code>dpo_usable=true</code></td><td>2</td><td>hard negative</td><td><span class="tag warn">单独分层</span></td></tr>
           <tr><td><code>env_only</code> / <code>empty</code></td><td>8</td><td>失败监控</td><td><span class="tag bad">排除训练</span></td></tr>
           <tr><td>DPO 目标不清楚</td><td>3</td><td>sqlfluff-1625 语义/gold 不一致</td><td><span class="tag bad">暂不导出</span></td></tr>
         </tbody>
       </table>
-      <div class="note">当前 filtered DPO v0.1 主集 37 条是官方评测前的历史版本；下一版需要剔除 13 个 official resolved，把它们转入 SFT 候选，避免把正确 patch 当 rejected。</div>
+      <div class="note">当前 official-aware v0.2 为 <code>DPO main 41</code>、<code>debug_cases 41</code>、<code>reward logs 60</code>。审计结果：无 bad SFT、无 bad DPO、无 degenerate DPO pair。</div>
     </section>
 
     <section class="section">
@@ -354,7 +356,7 @@
           <ul>
             <li>pvlib：5 close + 1 partial，质量稳定。</li>
             <li>pydicom：7 close + 1 partial，适合做人工校准案例。</li>
-            <li>requests：6 个 run 官方评测待处理，暂不作为训练标签来源。</li>
+            <li>requests：1 个 run 已完成官方评测并进入 DPO；其余 5 个 pending 暂不作为训练标签来源。</li>
             <li>flask：3 close，为 test split 并发扩展样本。</li>
             <li>pytest：1 close + 1 partial，为 test split 并发扩展样本。</li>
             <li>seaborn：2 close，其中一条作为当前真实 SFT sanity 候选。</li>
@@ -369,7 +371,7 @@
             <li>6 条 <code>env_only</code>：环境/依赖/数据加载失败。</li>
             <li>2 条 <code>empty</code>：没有有效 patch。</li>
             <li>3 条 sqlfluff-1625 partial：issue 语义和 gold patch 不一致，DPO target 不够清楚。</li>
-            <li>6 个 requests run：官方测试长时间挂起，需要短超时或专项环境诊断后再判定。</li>
+            <li>5 个 requests pending run：官方测试长时间挂起，需要短超时或专项环境诊断后再判定。</li>
             <li>fake baseline：只做管道 sanity，不混入真实 SWE-bench 质量结论。</li>
           </ul>
         </div>
@@ -379,10 +381,10 @@
     <section class="section">
       <h2>下一步</h2>
       <ol>
-        <li>重建 official-aware 数据集：13 个 official resolved 进入真实 SFT 候选，29 个 official unresolved 进入 DPO/debug 候选。</li>
-        <li>单独处理 6 个 requests run：短超时复跑或隔离 requests 网络测试，避免阻塞批量评测。</li>
-        <li>重新导出 DPO v0.2，剔除已 resolved 的 agent patch，不再使用旧 v0.1 作为训练输入。</li>
-        <li>继续扩到 100 条真实 patch，但每批先完成官方评测，再做人工标注和训练导出。</li>
+        <li>继续补充 official resolved 正例：当前 <code>SFT patch 19</code>，距离训练启动门槛 <code>30</code> 还差 11 条。</li>
+        <li>继续补充 DPO：当前 <code>DPO main 41</code>，距离门槛 <code>60</code> 还差 19 条。</li>
+        <li>每批扩容采用小批策略：预拉镜像、运行 mini、filtered official eval、重建 v0.2、审计数据。</li>
+        <li>5 个 requests pending run 暂不阻塞主线，后续作为专项稳定性问题处理。</li>
         <li>把 env_only、requests pending、official unresolved 分开统计到工程看板。</li>
       </ol>
     </section>

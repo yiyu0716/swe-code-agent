@@ -45,7 +45,9 @@ def test_progress_page_links_to_project_overview() -> None:
     assert "dpo_browser.html" in html
     assert "DPO 数据浏览器" in html
     assert "官方 SWE-bench 评测" in html
-    assert "13 个官方 resolved" in html
+    assert "19 个官方 resolved" in html
+    assert "SFT Patch" in html
+    assert "DPO Main" in html
 
 
 def test_review_ui_page_explains_annotation_rules() -> None:
@@ -122,17 +124,18 @@ def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
         "数据质量报告",
         "manual_annotations.jsonl",
         "官方 SWE-bench 评测",
-        "42 / 48",
-        "13 official resolved",
-        "6 个 requests run",
+        "60 completed",
+        "19 official resolved",
+        "5 个 requests run",
+        "SFT patch 19",
+        "DPO main 41",
+        "reward logs 60",
         "52 条 annotation",
         "close=23",
         "partial=19",
         "poor=2",
         "empty=2",
         "env_only=6",
-        "SFT 可用 2",
-        "DPO 可用 40",
         "仓库分布",
         "失败类型",
         "SFT 入选规则",

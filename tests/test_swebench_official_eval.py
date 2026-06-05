@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 
 from swetrace.eval.swebench_official import (
     build_prediction_shards,
+    filter_dataset_for_predictions,
     import_run_statuses,
     official_image_for_instance,
     pip_proxy_dockerfile,
@@ -65,6 +66,30 @@ def test_build_prediction_shards_preserves_duplicate_instances(tmp_path) -> None
     assert shards[1].rows[0].prediction["model_patch"] == "patch b"
 
 
+def test_filter_dataset_for_predictions_keeps_only_submitted_instances(tmp_path) -> None:
+    dataset = tmp_path / "dataset.json"
+    dataset.write_text(
+        json.dumps(
+            [
+                {"instance_id": "task-1", "repo": "owner/repo"},
+                {"instance_id": "task-2", "repo": "owner/repo"},
+                {"instance_id": "task-3", "repo": "owner/repo"},
+            ]
+        )
+    )
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(
+        json.dumps({"instance_id": "task-2", "model_patch": "patch", "model_name_or_path": "m"})
+        + "\n"
+    )
+    out = tmp_path / "filtered.json"
+
+    payload = filter_dataset_for_predictions(dataset, predictions, out)
+
+    assert payload == {"instances": 1, "out": str(out)}
+    assert json.loads(out.read_text()) == [{"instance_id": "task-2", "repo": "owner/repo"}]
+
+
 def test_official_eval_cli_writes_prediction_shards(tmp_path) -> None:
     runs = tmp_path / "runs"
     _write_run(runs, "run-a", "sqlfluff__sqlfluff-1625", "patch a")
@@ -102,6 +127,15 @@ def test_official_eval_script_defaults_to_pip_proxy_images() -> None:
     script = REPO_ROOT / "scripts" / "run_official_eval.sh"
 
     assert 'INSTANCE_TAG="${SWETRACE_OFFICIAL_INSTANCE_TAG:-pip-proxy}"' in script.read_text()
+
+
+def test_official_eval_script_filters_dataset_to_prediction_instances() -> None:
+    script = REPO_ROOT / "scripts" / "run_official_eval.sh"
+    text = script.read_text()
+
+    assert "filter-dataset" in text
+    assert '-d "${FILTERED_DATASET_JSON}"' in text
+    assert '-d "${DATASET_JSON}"' not in text
 
 
 def test_official_eval_cli_exposes_pip_proxy_image_command() -> None:

@@ -47,6 +47,22 @@ def write_local_dataset_json(dataset: Path, splits: list[str], out: Path) -> dic
     return {"instances": len(rows), "out": str(out)}
 
 
+def filter_dataset_for_predictions(dataset_json: Path, predictions: Path, out: Path) -> dict[str, str | int]:
+    submitted_ids = {
+        str(json.loads(line)["instance_id"])
+        for line in predictions.read_text().splitlines()
+        if line.strip()
+    }
+    rows = [
+        row
+        for row in json.loads(dataset_json.read_text())
+        if str(row.get("instance_id")) in submitted_ids
+    ]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n")
+    return {"instances": len(rows), "out": str(out)}
+
+
 def build_prediction_shards(
     runs: Path,
     model_prefix: str = "swetrace-mini-swe-agent-deepseek",
@@ -291,6 +307,20 @@ def write_dataset_json_command(
     splits: list[str] = typer.Option(["dev", "test"], help="Parquet splits to combine."),
 ) -> None:
     typer.echo(json.dumps(write_local_dataset_json(dataset, splits, out), ensure_ascii=False))
+
+
+@app.command("filter-dataset")
+def filter_dataset_command(
+    dataset_json: Path = typer.Option(..., exists=True, readable=True, help="Official harness JSON dataset path."),
+    predictions: Path = typer.Option(..., exists=True, readable=True, help="Prediction JSONL path."),
+    out: Path = typer.Option(..., help="Filtered official harness JSON dataset path."),
+) -> None:
+    typer.echo(
+        json.dumps(
+            filter_dataset_for_predictions(dataset_json=dataset_json, predictions=predictions, out=out),
+            ensure_ascii=False,
+        )
+    )
 
 
 @app.command("write-predictions")

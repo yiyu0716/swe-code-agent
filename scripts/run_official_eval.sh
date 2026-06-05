@@ -14,9 +14,14 @@ TIMEOUT="${SWETRACE_OFFICIAL_TIMEOUT_SECONDS:-1800}"
 INSTANCE_IDS="${SWETRACE_OFFICIAL_INSTANCE_IDS:-}"
 
 mkdir -p "${OFFICIAL_ROOT}" /data/yiyuldx/swe/hf_cache /data/yiyuldx/swe/hf_datasets /data/yiyuldx/swe/tmp
+FILTERED_DATASET_JSON="${OFFICIAL_ROOT}/predictions/current/${RUN_ID}_dataset.json"
+"${PYTHON}" -m swetrace.eval.swebench_official filter-dataset \
+  --dataset-json "${DATASET_JSON}" \
+  --predictions "${PREDICTIONS}" \
+  --out "${FILTERED_DATASET_JSON}"
 
 args=(
-  -d "${DATASET_JSON}"
+  -d "${FILTERED_DATASET_JSON}"
   -s test
   -p "${PREDICTIONS}"
   --max_workers "${MAX_WORKERS}"
