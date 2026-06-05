@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWE-Trace 项目全景图</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --panel: #ffffff;
+      --text: #182233;
+      --muted: #637083;
+      --line: #dbe2ea;
+      --accent: #1769aa;
+      --accent-soft: #e8f2fb;
+      --green: #177245;
+      --amber: #9b6200;
+      --red: #b53b35;
+      --blue: #245a9f;
+      --teal: #127273;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.58;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 28px 32px 24px;
+    }
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 20px; margin-bottom: 12px; }
+    h3 { font-size: 15px; margin-bottom: 6px; }
+    p { margin: 8px 0 0; color: var(--muted); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      background: #eef2f6;
+      border-radius: 5px;
+      padding: 2px 5px;
+      color: #233247;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .subtitle { max-width: 920px; }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .nav a {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfd;
+      padding: 8px 10px;
+      font-weight: 650;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+    .section, .card, .flow-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .section { padding: 20px; margin-top: 16px; }
+    .card { padding: 16px; }
+    .metric {
+      display: block;
+      color: var(--accent);
+      font-size: 28px;
+      font-weight: 760;
+      margin-top: 4px;
+    }
+    .flow-wrap {
+      overflow-x: auto;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    svg { display: block; min-width: 1120px; }
+    .node rect { rx: 7; ry: 7; stroke-width: 1.4; }
+    .node text { font-size: 13px; fill: var(--text); font-weight: 650; }
+    .node .small { font-size: 11px; fill: var(--muted); font-weight: 500; }
+    .arrow { stroke: #637083; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+    .branch { stroke-dasharray: 5 4; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 5px;
+      vertical-align: -1px;
+    }
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfd;
+    }
+    .row strong { color: var(--text); }
+    ul, ol { margin: 10px 0 0; padding-left: 22px; color: var(--muted); }
+    li { margin: 5px 0; }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #f9fbfd;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+    .callout p { margin-top: 0; }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .table th, .table td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .table th { color: var(--text); background: #f8fafc; }
+    @media (max-width: 900px) {
+      header { padding: 22px 18px; }
+      main { padding: 16px; }
+      .grid, .two-col { grid-template-columns: 1fr; }
+      h1 { font-size: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="eyebrow">项目理解页</span>
+    <h1>SWE-Trace 项目全景图</h1>
+    <p class="subtitle">
+      这页从头到尾解释 SWE-Trace / SWE-Code-Agent 已经完成的事情：为什么做、数据从哪里来、agent 怎么跑、
+      轨迹如何变成训练数据、你现在为什么需要人工复核，以及下一步要怎么继续。
+    </p>
+    <nav class="nav" aria-label="报告导航">
+      <a href="progress.html">返回项目进展</a>
+      <a href="#flow">端到端流程图</a>
+      <a href="#manual">人工介入说明</a>
+      <a href="#artifacts">数据产物地图</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="grid" aria-label="当前核心指标">
+      <div class="card">
+        <h3>代码根目录</h3>
+        <p><code>/home/yiyuldx/swe</code></p>
+      </div>
+      <div class="card">
+        <h3>数据根目录</h3>
+        <p><code>/data/yiyuldx/swe</code></p>
+      </div>
+      <div class="card">
+        <h3>真实 Runs</h3>
+        <span class="metric">30</span>
+        <p>29 个 mini-SWE-agent + 1 个 fake baseline</p>
+      </div>
+      <div class="card">
+        <h3>训练数据雏形</h3>
+        <span class="metric">160</span>
+        <p>SFT、DPO、reward、review queue 的 JSONL 总量</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>一句话定位</h2>
+      <p>
+        这个项目是一个面向 Code Agent post-training 的数据工程和评测闭环：把 SWE-bench Lite 任务交给
+        <code>mini-SWE-agent + DeepSeek</code> 真实执行，保存每一步轨迹、patch 和测试结果，再把这些 run
+        转成 SFT / DPO / Reward 数据，并通过人工复核把自动标签修正成可训练、可解释、可展示的数据资产。
+      </p>
+      <div class="callout">
+        <p>
+          你现在的人工介入点不是写代码修 bug，而是判断 agent 失败样本的质量：
+          patch 离 gold patch 有多近、自动失败标签是否正确、这条样本能不能进入 SFT 或 DPO 数据。
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="flow">
+      <h2>端到端流程图</h2>
+      <p>从原始 SWE-bench Lite 任务到人工质检数据，当前链路如下。实线是已经自动化的主路径，虚线是人工复核和下一阶段质量报告路径。</p>
+      <div class="flow-wrap" role="img" aria-label="SWE-Trace 端到端流程图">
+        <svg width="1120" height="760" viewBox="0 0 1120 760" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+              <path d="M0,0 L10,3 L0,6 Z" fill="#637083"></path>
+            </marker>
+          </defs>
+
+          <g class="node">
+            <rect x="30" y="40" width="190" height="78" fill="#e8f2fb" stroke="#1769aa"></rect>
+            <text x="48" y="68">1. SWE-bench Lite parquet</text>
+            <text x="48" y="91" class="small">dev/test 从 hf-mirror 下载</text>
+            <text x="48" y="108" class="small">/data/yiyuldx/swe/cache</text>
+          </g>
+          <g class="node">
+            <rect x="270" y="40" width="190" height="78" fill="#eef7ef" stroke="#177245"></rect>
+            <text x="288" y="68">2. 任务选择</text>
+            <text x="288" y="91" class="small">select_swebench_tasks.sh</text>
+            <text x="288" y="108" class="small">跳过已跑 run</text>
+          </g>
+          <g class="node">
+            <rect x="510" y="40" width="190" height="78" fill="#fff5e3" stroke="#9b6200"></rect>
+            <text x="528" y="68">3. Docker 镜像准备</text>
+            <text x="528" y="91" class="small">prepare_swebench_images.sh</text>
+            <text x="528" y="108" class="small">data-root 在 /data</text>
+          </g>
+          <g class="node">
+            <rect x="750" y="40" width="220" height="78" fill="#f0f4ff" stroke="#245a9f"></rect>
+            <text x="768" y="68">4. mini-SWE-agent + DeepSeek</text>
+            <text x="768" y="91" class="small">run_mini_smoke.sh</text>
+            <text x="768" y="108" class="small">容器代理 + 清华 PyPI 源</text>
+          </g>
+
+          <path class="arrow" d="M220 79 H270"></path>
+          <path class="arrow" d="M460 79 H510"></path>
+          <path class="arrow" d="M700 79 H750"></path>
+
+          <g class="node">
+            <rect x="750" y="170" width="220" height="86" fill="#eef7f7" stroke="#127273"></rect>
+            <text x="768" y="198">5. RunStore 标准化产物</text>
+            <text x="768" y="221" class="small">task / trajectory / patch</text>
+            <text x="768" y="238" class="small">test log / report / raw traj</text>
+          </g>
+          <path class="arrow" d="M860 118 V170"></path>
+
+          <g class="node">
+            <rect x="510" y="170" width="190" height="86" fill="#f8f0fb" stroke="#7a4e9d"></rect>
+            <text x="528" y="198">6. Parser & Recovery</text>
+            <text x="528" y="221" class="small">mini_swe_agent.py</text>
+            <text x="528" y="238" class="small">recover_mini_runs.sh</text>
+          </g>
+          <path class="arrow" d="M750 213 H700"></path>
+
+          <g class="node">
+            <rect x="270" y="170" width="190" height="86" fill="#eef2f6" stroke="#637083"></rect>
+            <text x="288" y="198">7. SWE-bench metadata</text>
+            <text x="288" y="221" class="small">enrich_swebench_run_tasks.sh</text>
+            <text x="288" y="238" class="small">issue / gold patch 回填</text>
+          </g>
+          <path class="arrow" d="M510 213 H460"></path>
+
+          <g class="node">
+            <rect x="30" y="170" width="190" height="86" fill="#fbf1f0" stroke="#b53b35"></rect>
+            <text x="48" y="198">8. 自动失败标签</text>
+            <text x="48" y="221" class="small">auto_label_runs.sh</text>
+            <text x="48" y="238" class="small">Environment / Patch / Test</text>
+          </g>
+          <path class="arrow" d="M270 213 H220"></path>
+
+          <g class="node">
+            <rect x="30" y="310" width="210" height="92" fill="#e8f2fb" stroke="#1769aa"></rect>
+            <text x="48" y="338">9. SFT / DPO / Reward 数据</text>
+            <text x="48" y="361" class="small">build_fake_data.sh</text>
+            <text x="48" y="378" class="small">sft_plan / patch / debug</text>
+            <text x="48" y="395" class="small">dpo_pairs / reward_logs</text>
+          </g>
+          <path class="arrow" d="M125 256 V310"></path>
+
+          <g class="node">
+            <rect x="300" y="310" width="220" height="92" fill="#fff5e3" stroke="#9b6200"></rect>
+            <text x="318" y="338">10. 人工复核队列</text>
+            <text x="318" y="361" class="small">build_review_queue.sh</text>
+            <text x="318" y="378" class="small">manual_review_queue.jsonl</text>
+            <text x="318" y="395" class="small">29 条待审</text>
+          </g>
+          <path class="arrow" d="M220 213 C260 230 305 270 360 310"></path>
+
+          <g class="node">
+            <rect x="580" y="310" width="230" height="92" fill="#eef7ef" stroke="#177245"></rect>
+            <text x="598" y="338">11. 人工复核与 annotation</text>
+            <text x="598" y="361" class="small">annotate_review.sh</text>
+            <text x="598" y="378" class="small">manual_annotations.jsonl</text>
+            <text x="598" y="395" class="small">patch_quality / SFT / DPO</text>
+          </g>
+          <path class="arrow branch" d="M520 356 H580"></path>
+
+          <g class="node">
+            <rect x="870" y="310" width="210" height="92" fill="#f0f4ff" stroke="#245a9f"></rect>
+            <text x="888" y="338">12. 数据质量报告</text>
+            <text x="888" y="361" class="small">下一阶段</text>
+            <text x="888" y="378" class="small">统计 close/partial/poor</text>
+            <text x="888" y="395" class="small">过滤训练数据</text>
+          </g>
+          <path class="arrow branch" d="M810 356 H870"></path>
+
+          <g class="node">
+            <rect x="170" y="480" width="230" height="100" fill="#eef7f7" stroke="#127273"></rect>
+            <text x="188" y="508">当前覆盖的真实任务</text>
+            <text x="188" y="531" class="small">sqlfluff / marshmallow</text>
+            <text x="188" y="548" class="small">pvlib / astroid</text>
+            <text x="188" y="565" class="small">pyvista / pydicom</text>
+          </g>
+          <path class="arrow branch" d="M135 402 C155 440 195 465 260 480"></path>
+
+          <g class="node">
+            <rect x="460" y="480" width="250" height="100" fill="#f8f0fb" stroke="#7a4e9d"></rect>
+            <text x="478" y="508">当前核心指标</text>
+            <text x="478" y="531" class="small">30 reports / 25 raw traj</text>
+            <text x="478" y="548" class="small">23 DPO pairs / 30 rewards</text>
+            <text x="478" y="565" class="small">1 manual annotation smoke</text>
+          </g>
+          <path class="arrow branch" d="M695 402 C680 442 635 465 610 480"></path>
+
+          <g class="node">
+            <rect x="770" y="480" width="230" height="100" fill="#fbf1f0" stroke="#b53b35"></rect>
+            <text x="788" y="508">人工判断会影响什么</text>
+            <text x="788" y="531" class="small">失败标签是否可信</text>
+            <text x="788" y="548" class="small">patch 是否可做 rejected</text>
+            <text x="788" y="565" class="small">样本是否进入训练集</text>
+          </g>
+          <path class="arrow branch" d="M975 402 V480"></path>
+
+          <g class="node">
+            <rect x="300" y="650" width="520" height="70" fill="#ffffff" stroke="#1769aa"></rect>
+            <text x="318" y="678">最终项目故事</text>
+            <text x="318" y="701" class="small">真实 Code Agent 轨迹采集 + 失败诊断 + 训练数据构造 + 人工质检闭环</text>
+          </g>
+          <path class="arrow" d="M285 580 C350 625 440 650 560 650"></path>
+          <path class="arrow" d="M585 580 V650"></path>
+          <path class="arrow" d="M885 580 C810 625 710 650 560 650"></path>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#e8f2fb"></span>数据源/训练数据</span>
+        <span><span class="dot" style="background:#eef7ef"></span>人工或任务选择</span>
+        <span><span class="dot" style="background:#fff5e3"></span>Docker/执行环境</span>
+        <span><span class="dot" style="background:#fbf1f0"></span>失败诊断</span>
+        <span><span class="dot" style="background:#f0f4ff"></span>报告和下一阶段</span>
+      </div>
+    </section>
+
+    <section class="two-col">
+      <div class="section">
+        <h2>代码模块地图</h2>
+        <div class="list">
+          <div class="row"><strong><code>swetrace/schema</code></strong><p>定义 task、trajectory、report、failure label、manual annotation 的稳定数据结构。</p></div>
+          <div class="row"><strong><code>swetrace/adapters</code></strong><p>把 fake agent 和 mini-SWE-agent 的输出转成统一 artifact。</p></div>
+          <div class="row"><strong><code>swetrace/collect</code></strong><p>选择 SWE-bench 任务、运行 agent、预拉 Docker 镜像、恢复 orphan raw traj、回填 gold patch。</p></div>
+          <div class="row"><strong><code>swetrace/data_builder</code></strong><p>从 run artifacts 构建 SFT plan、SFT patch、SFT debug、DPO pairs 和 reward logs。</p></div>
+          <div class="row"><strong><code>swetrace/labeling</code></strong><p>自动失败分类、人工复核队列、人工 annotation upsert。</p></div>
+        </div>
+      </div>
+
+      <div class="section" id="artifacts">
+        <h2>数据产物地图</h2>
+        <table class="table">
+          <thead><tr><th>路径</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><code>/data/yiyuldx/swe/runs/&lt;run_id&gt;</code></td><td>每次 agent 执行的标准产物目录。</td></tr>
+            <tr><td><code>task.json</code></td><td>issue、repo、expected files、gold_patch。</td></tr>
+            <tr><td><code>trajectory.jsonl</code></td><td>agent 每一步思考、工具调用、测试和编辑痕迹。</td></tr>
+            <tr><td><code>patch.diff</code></td><td>agent 产出的最终 patch。</td></tr>
+            <tr><td><code>report.json</code></td><td>status、patch_apply、tests_passed、resolved、token usage。</td></tr>
+            <tr><td><code>labels.json</code></td><td>rule-based 自动失败标签。</td></tr>
+            <tr><td><code>manual_review_queue.jsonl</code></td><td>你现在要看的人工复核队列。</td></tr>
+            <tr><td><code>manual_annotations.jsonl</code></td><td>你人工确认后的标签、patch 质量、SFT/DPO 可用性。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="manual">
+      <h2>下一步人工介入</h2>
+      <ol>
+        <li>打开 <code>/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl</code>，选一条 run。</li>
+        <li>查看对应 run 目录里的 <code>task.json</code>、<code>gold_patch</code>、<code>patch.diff</code>、<code>report.json</code> 和 <code>test.log</code>。</li>
+        <li>判断自动标签是否正确：环境失败、patch 应用失败、未完整修复、测试失败。</li>
+        <li>判断 <code>patch_quality</code>：<code>close</code>、<code>partial</code>、<code>poor</code>、<code>empty</code>、<code>env_only</code>。</li>
+        <li>用 <code>scripts/annotate_review.sh</code> 写入人工结论，结果进入 <code>manual_annotations.jsonl</code>。</li>
+      </ol>
+      <div class="callout">
+        <p><strong>推荐复核顺序：</strong>先看 pydicom 和 pyvista，因为 patch 小、gold patch 明确；再看 astroid、pvlib、marshmallow、sqlfluff。</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>为什么这个项目现在已经有雏形</h2>
+      <p>
+        它已经不是只有脚本或报告，而是有真实采集、统一 schema、run artifacts、自动标签、训练数据导出、人工复核入口和网页说明。
+        接下来只要你继续补人工 annotation，就能把“真实失败轨迹”变成可筛选、可解释、可用于后训练实验的数据集。
+      </p>
+    </section>
+  </main>
+</body>
+</html>

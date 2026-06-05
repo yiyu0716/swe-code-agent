@@ -75,6 +75,22 @@
       font-weight: 650;
       font-size: 13px;
     }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .nav a {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfd;
+      padding: 8px 10px;
+      color: var(--accent);
+      font-weight: 650;
+      text-decoration: none;
+    }
+    .nav a:hover { text-decoration: underline; }
     .timeline {
       display: grid;
       gap: 10px;
@@ -124,6 +140,10 @@
       面向 Code Agent Post-training 的轨迹采集、失败诊断、SFT/DPO 数据构造与小规模训练验证。
       本页会在每次项目推进后更新，可从本地电脑打开。
     </p>
+    <nav class="nav" aria-label="报告导航">
+      <a href="project_overview.html">项目全景图</a>
+      <a href="progress.html">项目进展</a>
+    </nav>
   </header>
 
   <main>
