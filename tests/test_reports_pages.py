@@ -44,6 +44,8 @@ def test_progress_page_links_to_project_overview() -> None:
     assert "数据质量报告" in html
     assert "dpo_browser.html" in html
     assert "DPO 数据浏览器" in html
+    assert "官方 SWE-bench 评测" in html
+    assert "13 个官方 resolved" in html
 
 
 def test_review_ui_page_explains_annotation_rules() -> None:
@@ -119,6 +121,10 @@ def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
     required_text = [
         "数据质量报告",
         "manual_annotations.jsonl",
+        "官方 SWE-bench 评测",
+        "42 / 48",
+        "13 official resolved",
+        "6 个 requests run",
         "52 条 annotation",
         "close=23",
         "partial=19",

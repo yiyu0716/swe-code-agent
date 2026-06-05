@@ -154,23 +154,23 @@
     <section class="grid" aria-label="项目指标">
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">53</span>
-        <p>52 个 mini-SWE-agent run 目录 + 1 个 fake baseline；47 条非空标准化轨迹</p>
+        <span class="metric">57</span>
+        <p>48 个真实非空 mini-SWE-agent patch + 1 个 fake baseline；官方评测已覆盖 42 个真实 patch</p>
       </div>
       <div class="card">
-        <h3>人工标注</h3>
-        <span class="metric">52</span>
-        <p>51 条 SWE-bench review queue + 1 条 fake baseline；close 23 / partial 19 / poor 2 / empty 2 / env_only 6</p>
+        <h3>官方 Resolved</h3>
+        <span class="metric">13</span>
+        <p>13 个官方 resolved；6 个 requests run 因 test_requests.py 挂起待专项处理</p>
       </div>
       <div class="card">
-        <h3>SFT 样本</h3>
-        <span class="metric">140</span>
-        <p>plan 52 / patch 44 / debug 44；filtered SFT sanity 2；目标：500+</p>
+        <h3>官方评测</h3>
+        <span class="metric">42/48</span>
+        <p>任务级 official report 已写入每个 run 的 <code>official_eval.json</code></p>
       </div>
       <div class="card">
         <h3>DPO Pairs</h3>
-        <span class="metric">43</span>
-        <p>基础 gold-vs-agent pairs 43；filtered v0.1 主集 37；reward logs 52 条</p>
+        <span class="metric">v0.2</span>
+        <p>旧 v0.1 需重建：已 resolved patch 不能再作为 rejected</p>
       </div>
     </section>
 
@@ -188,7 +188,7 @@
         DeepSeek 小任务连通性失败的根因是 <code>uvx</code> 临时环境缺少 <code>socksio</code>；
         脚本已改为通过 <code>uvx --with socksio</code> 启动 mini-SWE-agent，并补上
         <code>--yolo</code>、timeout、正确 SWE-bench instance metadata、容器内代理与清华 PyPI 源。
-        当前已覆盖 36 个 unique task id；52 个 mini-SWE-agent run 目录中有 46 条非空标准化轨迹。
+        当前已覆盖 39 个 unique SWE-bench task id；48 条真实非空 mini-SWE-agent patch 已生成官方评测输入。
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
         已形成真实采集到训练数据的最小闭环。SWE-bench Lite dev 本地 23 个任务已无剩余未跑项；
         当前已开始扩展 SWE-bench Lite test split，并新增非破坏式人工 annotation CLI 和本地 Web 复核工作台，review 结果写入
@@ -199,7 +199,10 @@
         已支持直接托管静态报告页，可打开 <code>/annotation_calibration.html</code> 和
         <code>/data_quality_report.html</code>。当前已导出 v0.1 filtered DPO 数据：
         <code>dpo_main=37</code>、<code>dpo_hard_negative=2</code>、<code>sft_sanity=2</code>、
-        <code>excluded=11</code>，并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本；下一步转向更多 test split 样本和真实 resolved run。
+        <code>excluded=11</code>，并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本。随后已接入官方 SWE-bench 评测：
+        42 / 48 个真实非空 patch 完成官方测试，13 个官方 resolved；旧 <code>report.json</code>
+        中由 <code>action was not executed</code> 派生的失败标签不再作为训练标签。下一步是用
+        <code>official_eval.json</code> 重建 SFT/DPO/reward v0.2，并单独处理 6 个 requests run。
       </p>
     </section>
 
@@ -582,15 +585,31 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>官方 SWE-bench 评测接入</h3>
+            <p>安装并跑通官方 <code>swebench.harness.run_evaluation</code>，新增 <code>swetrace.eval.swebench_official</code> 和 <code>scripts/run_official_eval.sh</code>。为 39 个已有 testbed image 构建 <code>pip-proxy</code> tag，只让 pip 下载走代理，不污染测试环境。当前 48 个真实非空 patch 中，42 个完成官方评测，13 个官方 resolved；6 个 <code>psf/requests</code> run 因 <code>test_requests.py</code> 长时间挂起，已标记为 pending。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>官方测试质量验证</h3>
+            <p>新鲜验证通过：<code>pytest -q</code> 为 <code>56 passed</code>，<code>./scripts/check_docker.sh</code> 通过，官方状态文件 <code>combined_pipproxy_run_status.jsonl</code> 统计为 <code>48 rows / 42 completed / 13 resolved / 6 pending</code>。<code>scripts/run_official_eval.sh</code> 默认 tag 已改为 <code>pip-proxy</code>，避免测试容器继承全局代理环境。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>打开 <code>reports/dpo_browser.html</code> 抽查刷新后的 37 条 v0.1 DPO 主集、2 条 hard-negative 和 2 条 SFT sanity。</li>
-        <li>用 <code>reports/annotation_calibration.html</code> 继续校准新采样本，后续人工复核只需重点看新增 run。</li>
-        <li>继续从 SWE-bench Lite test split 选择轻量任务，优先寻找真实 resolved run；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
+        <li>用 <code>official_eval.json</code> 重建 SFT/DPO/reward v0.2：13 个官方 resolved 进 SFT 候选，29 个官方 unresolved 进 DPO/debug 候选。</li>
+        <li>对 6 个 <code>psf/requests</code> pending run 做短超时或专项诊断，不阻塞其他仓库。</li>
+        <li>继续从 SWE-bench Lite test split 扩到 100 条真实 patch，但每批先官方评测，再人工标注和训练导出。</li>
       </ul>
     </section>
   </main>
