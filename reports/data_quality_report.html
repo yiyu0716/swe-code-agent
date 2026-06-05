@@ -190,7 +190,7 @@
 <body>
   <header>
     <h1>数据质量报告</h1>
-    <p class="subtitle">基于 <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code> 的 37 条 annotation，对当前 SWE-Trace 初版数据做可用性、失败类型、仓库覆盖和 SFT/DPO 入选规则分析。</p>
+    <p class="subtitle">基于 <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code> 的 41 条 annotation，对当前 SWE-Trace 初版数据做可用性、失败类型、仓库覆盖和 SFT/DPO 入选规则分析。</p>
     <nav class="nav" aria-label="报告导航">
       <a href="index.html">报告入口</a>
       <a href="progress.html">项目进展</a>
@@ -205,12 +205,12 @@
     <section class="metrics" aria-label="核心指标">
       <div class="metric">
         <h3>总 annotation</h3>
-        <strong>37</strong>
-        <p>36 条 SWE-bench review queue + 1 条 fake resolved baseline。</p>
+        <strong>41</strong>
+        <p>40 条 SWE-bench review queue + 1 条 fake resolved baseline。</p>
       </div>
       <div class="metric">
         <h3>质量分布</h3>
-        <strong>27</strong>
+        <strong>31</strong>
         <p><code>close + partial</code> 样本，可用于第一版 DPO/debug 质检。</p>
       </div>
       <div class="metric">
@@ -220,32 +220,32 @@
       </div>
       <div class="metric">
         <h3>DPO 可用</h3>
-        <strong>25</strong>
-        <p>DPO 可用 25 条，适合导出偏好数据候选集。</p>
+        <strong>29</strong>
+        <p>DPO 可用 29 条，适合导出偏好数据候选集。</p>
       </div>
     </section>
 
     <section class="section">
       <h2>总览结论</h2>
-      <p>当前这批数据已经能证明项目从真实轨迹采集、patch/gold 对比、人工标注到训练数据筛选的闭环跑通，但规模仍小，不能直接用于严肃 SFT。最有价值的是 <code>DPO/debug</code>：失败轨迹里有 12 条 <code>close</code>、15 条 <code>partial</code>，说明 agent 经常接近正确区域，适合学习“为什么还没修好”。</p>
+      <p>当前这批数据已经能证明项目从真实轨迹采集、patch/gold 对比、人工标注到训练数据筛选的闭环跑通，但规模仍小，不能直接用于严肃 SFT。最有价值的是 <code>DPO/debug</code>：失败轨迹里有 15 条 <code>close</code>、16 条 <code>partial</code>，说明 agent 经常接近正确区域，适合学习“为什么还没修好”。</p>
       <div class="note">可用/不可用 的核心判断：训练前过滤 <code>env_only</code>、<code>empty</code> 和 DPO 目标不清楚的 sqlfluff-1625 重复样本；优先保留 <code>dpo_usable=true</code> 且有明确 gold-vs-agent 差异的样本。</div>
     </section>
 
     <section class="section">
       <h2>patch_quality 分布</h2>
-      <p>当前质量桶：<code>close=12</code>、<code>partial=15</code>、<code>poor=2</code>、<code>empty=2</code>、<code>env_only=6</code>。</p>
+      <p>当前质量桶：<code>close=15</code>、<code>partial=16</code>、<code>poor=2</code>、<code>empty=2</code>、<code>env_only=6</code>。</p>
       <div class="two">
         <div class="card">
-          <div class="bar"><span>close=12</span><div class="rail"><div class="fill ok" style="width: 32.4%"></div></div><span>32%</span></div>
-          <div class="bar"><span>partial=15</span><div class="rail"><div class="fill" style="width: 40.5%"></div></div><span>41%</span></div>
-          <div class="bar"><span>poor=2</span><div class="rail"><div class="fill bad" style="width: 5.4%"></div></div><span>5%</span></div>
-          <div class="bar"><span>empty=2</span><div class="rail"><div class="fill warn" style="width: 5.4%"></div></div><span>5%</span></div>
-          <div class="bar"><span>env_only=6</span><div class="rail"><div class="fill warn" style="width: 16.2%"></div></div><span>16%</span></div>
+          <div class="bar"><span>close=15</span><div class="rail"><div class="fill ok" style="width: 36.6%"></div></div><span>37%</span></div>
+          <div class="bar"><span>partial=16</span><div class="rail"><div class="fill" style="width: 39%"></div></div><span>39%</span></div>
+          <div class="bar"><span>poor=2</span><div class="rail"><div class="fill bad" style="width: 4.9%"></div></div><span>5%</span></div>
+          <div class="bar"><span>empty=2</span><div class="rail"><div class="fill warn" style="width: 4.9%"></div></div><span>5%</span></div>
+          <div class="bar"><span>env_only=6</span><div class="rail"><div class="fill warn" style="width: 14.6%"></div></div><span>15%</span></div>
         </div>
         <div class="card">
           <h3>解读</h3>
           <ul>
-            <li><code>close + partial = 27</code>，说明这批失败不是纯噪声，有较强 debug/DPO 价值。</li>
+            <li><code>close + partial = 31</code>，说明这批失败不是纯噪声，有较强 debug/DPO 价值。</li>
             <li><code>env_only = 6</code>，环境噪声需要从训练集中排除，但可以用于工程监控。</li>
             <li><code>poor = 2</code>，适合作 hard negative，但不宜在小数据集里占比过高。</li>
             <li><code>empty = 2</code>，只保留作失败类型统计，不进入训练。</li>
@@ -267,6 +267,8 @@
           <tr><td><code>pylint-dev/astroid</code></td><td>5</td><td>close 1 / partial 3 / poor 1</td><td>有学习价值，但需要更多复核说明。</td></tr>
           <tr><td><code>marshmallow-code</code></td><td>3</td><td>partial 3</td><td>数量少，适合作失败轨迹例子。</td></tr>
           <tr><td><code>psf/requests</code></td><td>4</td><td>close 1 / partial 1 / empty 1 / env_only 1</td><td>test split 扩展样本，保留两条 DPO 候选。</td></tr>
+          <tr><td><code>pytest-dev/pytest</code></td><td>2</td><td>close 1 / partial 1</td><td>test split 并发扩展样本，均可入 DPO/debug。</td></tr>
+          <tr><td><code>pallets/flask</code></td><td>2</td><td>close 2</td><td>test split 并发扩展样本，质量较好。</td></tr>
           <tr><td><code>pyvista</code></td><td>1</td><td>partial 1</td><td>可用但代表性不足。</td></tr>
           <tr><td><code>django</code></td><td>1</td><td>env_only 1</td><td>环境失败，只做工程噪声记录。</td></tr>
           <tr><td><code>fake baseline</code></td><td>1</td><td>close 1</td><td>只做 SFT sanity sample，不和真实 SWE-bench 混用。</td></tr>
@@ -278,7 +280,7 @@
       <h2>失败类型</h2>
       <div class="three">
         <div class="card">
-          <span class="tag warn">PatchError.IncompleteFix = 28</span>
+          <span class="tag warn">PatchError.IncompleteFix = 32</span>
           <p>主要失败类型。说明 agent 多数能产出 patch，但没有完整解决测试要求。</p>
         </div>
         <div class="card">
@@ -300,8 +302,8 @@
         </thead>
         <tbody>
           <tr><td>resolved 且 tests passed</td><td>SFT 可用 1</td><td><span class="tag ok">入选 sanity</span></td><td>只有 fake baseline，不能代表真实 SWE-bench。</td></tr>
-          <tr><td>failed 但 patch close</td><td>11 条真实 close</td><td><span class="tag warn">暂不入选 SFT</span></td><td>失败轨迹不适合直接模仿，可转 DPO/debug。</td></tr>
-          <tr><td>partial / poor / empty</td><td>19 条</td><td><span class="tag bad">不入选</span></td><td>避免教模型复制不完整或错误修复。</td></tr>
+          <tr><td>failed 但 patch close</td><td>14 条真实 close</td><td><span class="tag warn">暂不入选 SFT</span></td><td>失败轨迹不适合直接模仿，可转 DPO/debug。</td></tr>
+          <tr><td>partial / poor / empty</td><td>20 条</td><td><span class="tag bad">不入选</span></td><td>避免教模型复制不完整或错误修复。</td></tr>
           <tr><td>env_only</td><td>6 条</td><td><span class="tag bad">不入选</span></td><td>环境失败不能说明模型修代码能力。</td></tr>
         </tbody>
       </table>
@@ -314,14 +316,14 @@
           <tr><th>候选集</th><th>数量</th><th>用途</th><th>建议</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>close</code> 且 <code>dpo_usable=true</code></td><td>11</td><td>高质量 rejected vs gold</td><td><span class="tag ok">优先导出</span></td></tr>
-          <tr><td><code>partial</code> 且 <code>dpo_usable=true</code></td><td>12</td><td>学习缺失边界、漏分支、漏兼容逻辑</td><td><span class="tag ok">优先导出</span></td></tr>
+          <tr><td><code>close</code> 且 <code>dpo_usable=true</code></td><td>14</td><td>高质量 rejected vs gold</td><td><span class="tag ok">优先导出</span></td></tr>
+          <tr><td><code>partial</code> 且 <code>dpo_usable=true</code></td><td>13</td><td>学习缺失边界、漏分支、漏兼容逻辑</td><td><span class="tag ok">优先导出</span></td></tr>
           <tr><td><code>poor</code> 且 <code>dpo_usable=true</code></td><td>2</td><td>hard negative</td><td><span class="tag warn">单独分层</span></td></tr>
           <tr><td><code>env_only</code> / <code>empty</code></td><td>8</td><td>失败监控</td><td><span class="tag bad">排除训练</span></td></tr>
           <tr><td>DPO 目标不清楚</td><td>3</td><td>sqlfluff-1625 语义/gold 不一致</td><td><span class="tag bad">暂不导出</span></td></tr>
         </tbody>
       </table>
-      <div class="note">当前 filtered DPO v0.1 主集已刷新到 23 条 <code>close/partial + dpo_usable=true</code>；2 条 <code>poor</code> 作为单独 hard-negative split，不和主集混在一起。</div>
+      <div class="note">当前 filtered DPO v0.1 主集已刷新到 27 条 <code>close/partial + dpo_usable=true</code>；2 条 <code>poor</code> 作为单独 hard-negative split，不和主集混在一起。</div>
     </section>
 
     <section class="section">
@@ -333,6 +335,8 @@
             <li>pvlib：4 close + 1 partial，质量稳定。</li>
             <li>pydicom：5 close + 1 partial，适合做人工校准案例。</li>
             <li>requests：1 close + 1 partial，为 test split 扩展样本。</li>
+            <li>flask：2 close，为 test split 并发扩展样本。</li>
+            <li>pytest：1 close + 1 partial，为 test split 并发扩展样本。</li>
             <li>astroid-1196：close，可作为复杂推理类 DPO 样本。</li>
             <li>marshmallow 三条 partial，可用于 debug 数据展示。</li>
           </ul>
@@ -352,7 +356,7 @@
     <section class="section">
       <h2>下一步</h2>
       <ol>
-        <li>已生成 filtered DPO JSONL：主集 <code>dpo_main.jsonl</code> 包含 23 条 <code>close/partial + dpo_usable=true</code>。</li>
+        <li>已生成 filtered DPO JSONL：主集 <code>dpo_main.jsonl</code> 包含 27 条 <code>close/partial + dpo_usable=true</code>。</li>
         <li>已生成 hard-negative JSONL：<code>dpo_hard_negative.jsonl</code> 单独放 2 条 <code>poor + dpo_usable=true</code>，训练时控制权重。</li>
         <li>打开 <code>dpo_browser.html</code> 抽查刷新后的 chosen/rejected 是否符合训练预期。</li>
         <li>继续跑更多 SWE-bench Lite tasks，目标先到 100 条真实 annotation，其中至少 30 条 close。</li>
