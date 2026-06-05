@@ -200,13 +200,13 @@
       </div>
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">41</span>
-        <p>40 个 mini-SWE-agent + 1 个 fake baseline</p>
+        <span class="metric">50</span>
+        <p>49 个 mini-SWE-agent run 目录 + 1 个 fake baseline</p>
       </div>
       <div class="card">
         <h3>训练数据雏形</h3>
-        <span class="metric">220</span>
-        <p>SFT、DPO、reward、review queue 的 JSONL 总量</p>
+        <span class="metric">277</span>
+        <p>SFT、DPO、reward、review queue 与 filtered v0.1 的 JSONL 总量</p>
       </div>
     </section>
 
@@ -311,7 +311,7 @@
             <text x="318" y="338">10. 人工复核队列</text>
             <text x="318" y="361" class="small">build_review_queue.sh</text>
             <text x="318" y="378" class="small">manual_review_queue.jsonl</text>
-            <text x="318" y="395" class="small">29 条待审</text>
+            <text x="318" y="395" class="small">48 条 SWE-bench 待审</text>
           </g>
           <path class="arrow" d="M220 213 C260 230 305 270 360 310"></path>
 
@@ -327,7 +327,7 @@
           <g class="node">
             <rect x="870" y="310" width="210" height="92" fill="#f0f4ff" stroke="#245a9f"></rect>
             <text x="888" y="338">12. 数据质量报告</text>
-            <text x="888" y="361" class="small">下一阶段</text>
+            <text x="888" y="361" class="small">data_quality_report.html</text>
             <text x="888" y="378" class="small">统计 close/partial/poor</text>
             <text x="888" y="395" class="small">过滤训练数据</text>
           </g>
@@ -337,17 +337,17 @@
             <rect x="170" y="480" width="230" height="100" fill="#eef7f7" stroke="#127273"></rect>
             <text x="188" y="508">当前覆盖的真实任务</text>
             <text x="188" y="531" class="small">sqlfluff / marshmallow</text>
-            <text x="188" y="548" class="small">pvlib / astroid</text>
-            <text x="188" y="565" class="small">pyvista / pydicom</text>
+            <text x="188" y="548" class="small">pvlib / astroid / pytest</text>
+            <text x="188" y="565" class="small">pyvista / pydicom / xarray / seaborn</text>
           </g>
           <path class="arrow branch" d="M135 402 C155 440 195 465 260 480"></path>
 
           <g class="node">
             <rect x="460" y="480" width="250" height="100" fill="#f8f0fb" stroke="#7a4e9d"></rect>
             <text x="478" y="508">当前核心指标</text>
-            <text x="478" y="531" class="small">30 reports / 25 raw traj</text>
-            <text x="478" y="548" class="small">23 DPO pairs / 30 rewards</text>
-            <text x="478" y="565" class="small">1 manual annotation smoke</text>
+            <text x="478" y="531" class="small">49 mini runs / 43 raw traj</text>
+            <text x="478" y="548" class="small">40 DPO pairs / 49 rewards</text>
+            <text x="478" y="565" class="small">49 manual annotations</text>
           </g>
           <path class="arrow branch" d="M695 402 C680 442 635 465 610 480"></path>
 

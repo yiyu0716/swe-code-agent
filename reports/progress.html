@@ -154,23 +154,23 @@
     <section class="grid" aria-label="项目指标">
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">41</span>
-        <p>40 个 mini-SWE-agent reports + 1 个 fake baseline；36 条非空标准化轨迹</p>
+        <span class="metric">50</span>
+        <p>49 个 mini-SWE-agent run 目录 + 1 个 fake baseline；44 条非空标准化轨迹</p>
       </div>
       <div class="card">
         <h3>人工标注</h3>
-        <span class="metric">41</span>
-        <p>40 条 review queue + 1 条 fake resolved baseline；close 15 / partial 16 / poor 2 / empty 2 / env_only 6</p>
+        <span class="metric">49</span>
+        <p>48 条 SWE-bench review queue + 1 条 fake baseline；close 20 / partial 19 / poor 2 / empty 2 / env_only 6</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
-        <span class="metric">107</span>
-        <p>plan 41 / patch 33 / debug 33；目标：500+</p>
+        <span class="metric">131</span>
+        <p>plan 49 / patch 41 / debug 41；filtered SFT sanity 2；目标：500+</p>
       </div>
       <div class="card">
         <h3>DPO Pairs</h3>
-        <span class="metric">32</span>
-        <p>基础 gold-vs-agent pairs 32；filtered v0.1 主集 27；reward logs 41 条</p>
+        <span class="metric">40</span>
+        <p>基础 gold-vs-agent pairs 40；filtered v0.1 主集 34；reward logs 49 条</p>
       </div>
     </section>
 
@@ -188,17 +188,17 @@
         DeepSeek 小任务连通性失败的根因是 <code>uvx</code> 临时环境缺少 <code>socksio</code>；
         脚本已改为通过 <code>uvx --with socksio</code> 启动 mini-SWE-agent，并补上
         <code>--yolo</code>、timeout、正确 SWE-bench instance metadata、容器内代理与清华 PyPI 源。
-        当前已覆盖 31 个 unique task id；40 个 mini-SWE-agent reports 中有 36 条非空标准化轨迹。
+        当前已覆盖 33 个 unique task id；49 个 mini-SWE-agent run 目录中有 43 条非空标准化轨迹。
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
         已形成真实采集到训练数据的最小闭环。SWE-bench Lite dev 本地 23 个任务已无剩余未跑项；
         当前已开始扩展 SWE-bench Lite test split，并新增非破坏式人工 annotation CLI 和本地 Web 复核工作台，review 结果写入
         <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>；当前新增
         <code>reports/annotation_calibration.html</code> 标注校准页，用于对照 OpenAI SWE-bench Verified
-        和 SWE-Trace 的 patch/SFT/DPO 标准。当前 40 条 SWE-bench 人工复核队列已全部写入 annotation，
+        和 SWE-Trace 的 patch/SFT/DPO 标准。当前 48 条 SWE-bench 人工复核队列已全部写入 annotation，
         另补 1 条 fake resolved baseline 作为成功 sanity sample。人工复核服务 <code>20039</code>
         已支持直接托管静态报告页，可打开 <code>/annotation_calibration.html</code> 和
         <code>/data_quality_report.html</code>。当前已导出 v0.1 filtered DPO 数据：
-        <code>dpo_main=27</code>、<code>dpo_hard_negative=2</code>、<code>sft_sanity=1</code>、
+        <code>dpo_main=34</code>、<code>dpo_hard_negative=2</code>、<code>sft_sanity=2</code>、
         <code>excluded=11</code>，并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本；下一步转向更多 test split 样本和真实 resolved run。
       </p>
     </section>
@@ -538,7 +538,7 @@
           <span class="badge done">完成</span>
           <div>
             <h3>v0.1 DPO 导出与浏览器</h3>
-            <p>新增 <code>swetrace.data_builder.export_filtered_dpo</code>，按 annotation 过滤生成 <code>/data/yiyuldx/swe/outputs/datasets/v0.1</code>；当前刷新后为 <code>dpo_main.jsonl</code> 23 条、<code>dpo_hard_negative.jsonl</code> 2 条、<code>sft_sanity.jsonl</code> 1 条、<code>excluded.jsonl</code> 11 条，并可用 <code>reports/dpo_browser.html</code> 可视化查看 prompt、chosen、rejected、patch_quality 和 notes。</p>
+            <p>新增 <code>swetrace.data_builder.export_filtered_dpo</code>，按 annotation 过滤生成 <code>/data/yiyuldx/swe/outputs/datasets/v0.1</code>；首次刷新时为 <code>dpo_main.jsonl</code> 23 条、<code>dpo_hard_negative.jsonl</code> 2 条、<code>sft_sanity.jsonl</code> 1 条、<code>excluded.jsonl</code> 11 条，并可用 <code>reports/dpo_browser.html</code> 可视化查看 prompt、chosen、rejected、patch_quality 和 notes。</p>
           </div>
           <span>2026-06-05</span>
         </div>
@@ -554,7 +554,23 @@
           <span class="badge done">完成</span>
           <div>
             <h3>DeepSeek 2 路并发扩充</h3>
-            <p>并发拉取 flask/pytest 镜像并以 2 路运行 mini-SWE-agent + DeepSeek v4-pro，新增 <code>pytest-dev__pytest-11143</code>、<code>pytest-dev__pytest-11148</code>、<code>pallets__flask-4045</code>、<code>pallets__flask-4992</code> 四条真实 failed 轨迹，均有非空 patch 并已首轮 annotation。当前 filtered DPO v0.1 主集刷新为 27 条，基础数据为 SFT plan 41、patch 33、debug 33、reward logs 41、DPO pairs 32。</p>
+            <p>并发拉取 flask/pytest 镜像并以 2 路运行 mini-SWE-agent + DeepSeek v4-pro，新增 <code>pytest-dev__pytest-11143</code>、<code>pytest-dev__pytest-11148</code>、<code>pallets__flask-4045</code>、<code>pallets__flask-4992</code> 四条真实 failed 轨迹，均有非空 patch 并已首轮 annotation。当时 filtered DPO v0.1 主集刷新为 27 条，基础数据为 SFT plan 41、patch 33、debug 33、reward logs 41、DPO pairs 32。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>DeepSeek 多路并发继续扩充</h3>
+            <p>在 Docker 镜像缓存和 DeepSeek API 可用的前提下，以 3 路并发补跑 <code>pydicom__pydicom-1139</code>、<code>pylint-dev__astroid-1196</code>、<code>pvlib__pvlib-python-1072</code>，随后补跑 <code>pydicom__pydicom-1256</code> 和 <code>pylint-dev__astroid-1978</code>；5 条均有真实轨迹和非空 patch，并写入人工倾向 annotation。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>SWE-bench Lite test split 新增样本</h3>
+            <p>新增 <code>pydata__xarray-3364</code>、<code>pylint-dev__pylint-5859</code>、<code>mwaskom__seaborn-2848</code> 三条真实 test split 轨迹：xarray 和 pylint 标为 <code>partial + dpo_usable</code>，seaborn 标为 <code>close</code> 且作为真实 SFT sanity 候选。当前 filtered v0.1 更新为 <code>dpo_main=34</code>、<code>dpo_hard_negative=2</code>、<code>sft_sanity=2</code>、<code>excluded=11</code>。</p>
           </div>
           <span>2026-06-05</span>
         </div>
@@ -564,7 +580,7 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>打开 <code>reports/dpo_browser.html</code> 抽查刷新后的 27 条 v0.1 DPO 主集和 2 条 hard-negative。</li>
+        <li>打开 <code>reports/dpo_browser.html</code> 抽查刷新后的 34 条 v0.1 DPO 主集、2 条 hard-negative 和 2 条 SFT sanity。</li>
         <li>用 <code>reports/annotation_calibration.html</code> 继续校准新采样本，后续人工复核只需重点看新增 run。</li>
         <li>继续从 SWE-bench Lite test split 选择轻量任务，优先寻找真实 resolved run；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
