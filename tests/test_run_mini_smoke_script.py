@@ -82,6 +82,7 @@ def test_run_mini_smoke_uses_socksio_yolo_timeout_and_instance_metadata(tmp_path
     assert "-c environment.env.https_proxy=http://10.32.192.70:7890" in python_args
     assert "-c environment.env.PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple" in python_args
     assert "-c environment.env.PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn" in python_args
+    assert "-c model.cost_tracking=ignore_errors" in python_args
 
     task = json.loads((calls_dir / "task.json").read_text())
     assert task["task_id"] == "sqlfluff__sqlfluff-1625"

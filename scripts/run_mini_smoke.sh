@@ -26,6 +26,7 @@ HTTPS_PROXY_VALUE="${HTTPS_PROXY:-${https_proxy:-}}"
 SAFE_INSTANCE_ID="${INSTANCE_ID//[^A-Za-z0-9_.-]/-}"
 TASK_FILE="${SWETRACE_MINI_TASK_FILE:-}"
 ENV_CONFIGS=(
+  "-c model.cost_tracking=ignore_errors"
   "-c environment.env.PIP_INDEX_URL=${PIP_INDEX_URL}"
   "-c environment.env.PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}"
 )
