@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWE-Trace 标注校准页</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #657083;
+      --line: #dfe4ea;
+      --accent: #1769aa;
+      --accent-soft: #e7f1fb;
+      --ok: #177245;
+      --warn: #9b6200;
+      --bad: #b53b35;
+      --ink: #263247;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.58;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 26px 32px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 20px; margin-bottom: 10px; }
+    h3 { font-size: 16px; margin-bottom: 7px; }
+    p { margin: 8px 0 0; color: var(--muted); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      background: #eef2f6;
+      border-radius: 5px;
+      padding: 2px 5px;
+      color: #253449;
+    }
+    .subtitle {
+      max-width: 900px;
+      font-size: 16px;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .nav a {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfd;
+      padding: 8px 10px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 14px;
+      min-width: 0;
+    }
+    .card strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 5px;
+    }
+    .tag {
+      display: inline-flex;
+      width: max-content;
+      border-radius: 999px;
+      padding: 4px 8px;
+      margin: 0 6px 6px 0;
+      font-size: 12px;
+      font-weight: 750;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .tag.ok { background: #e7f5ec; color: var(--ok); }
+    .tag.warn { background: #fff5e3; color: var(--warn); }
+    .tag.bad { background: #fae9e7; color: var(--bad); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: #fbfcfd;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef2f6;
+      color: var(--ink);
+      font-size: 13px;
+    }
+    tr:last-child td { border-bottom: 0; }
+    ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    li { margin: 5px 0; }
+    .note {
+      border-left: 4px solid var(--accent);
+      background: #f9fbfd;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-top: 12px;
+      color: var(--muted);
+    }
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .example {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 14px;
+    }
+    .example dl {
+      margin: 10px 0 0;
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 6px 8px;
+      font-size: 14px;
+    }
+    .example dt { color: var(--muted); }
+    .example dd { margin: 0; color: var(--text); }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .two, .example-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      header { padding: 22px 18px; }
+      main { padding: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>标注校准页</h1>
+    <p class="subtitle">这个页面帮你在进入人工复核工作台之前统一判断标准：你只需要人工决定 5 个字段，其余 run 元数据和自动标签由系统填充。</p>
+    <nav class="nav" aria-label="报告导航">
+      <a href="index.html">报告入口</a>
+      <a href="progress.html">项目进展</a>
+      <a href="project_overview.html">项目全景图</a>
+      <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <h2>你真正需要标什么</h2>
+      <p>每条样本先看 issue、gold patch、agent patch 和测试结果，再填写下面 5 项。不要改 run id、task id、自动 failure、模型名、路径等系统字段。</p>
+      <div class="grid">
+        <div class="card">
+          <strong><code>patch_quality</code></strong>
+          <p>判断 agent patch 和 gold patch 的接近程度。</p>
+        </div>
+        <div class="card">
+          <strong><code>human_failure</code></strong>
+          <p>人工确认主要失败原因，必要时覆盖自动标签。</p>
+        </div>
+        <div class="card">
+          <strong><code>sft_usable</code></strong>
+          <p>这条轨迹是否适合教模型“应该怎么做”。</p>
+        </div>
+        <div class="card">
+          <strong><code>dpo_usable</code></strong>
+          <p>这条失败 patch 是否适合和 gold patch 组成偏好对。</p>
+        </div>
+        <div class="card">
+          <strong><code>notes</code></strong>
+          <p>写清楚依据：看到了什么，所以这么判。</p>
+        </div>
+      </div>
+      <div class="note">推荐顺序：先判断是不是环境问题，再看 patch 是否为空，然后比较 agent patch 与 gold patch 的文件、函数、核心逻辑，最后决定 SFT/DPO 是否可用。</div>
+    </section>
+
+    <section class="section">
+      <h2>OpenAI SWE-bench Verified 给我们的参考</h2>
+      <p>OpenAI SWE-bench Verified 是公开的人类开发者复核样本集。它不直接标 agent 轨迹，但它告诉我们：一个 SWE-bench 任务本身是否清楚、测试是否合理、任务难度如何。</p>
+      <div class="two">
+        <div class="card">
+          <strong>可借鉴的字段</strong>
+          <ul>
+            <li><code>underspecified</code>：issue 是否描述不充分，合理开发者是否缺少必要信息。</li>
+            <li><code>false_negative</code>：测试是否可能拒绝一个合理解法。</li>
+            <li><code>other_major_issues</code>：任务是否有其他严重质量问题。</li>
+            <li><code>difficulty</code>：人类开发者预计修复耗时。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>怎么迁移到 SWE-Trace</strong>
+          <ul>
+            <li>issue 清楚、测试合理时，失败更可能归因于 agent patch。</li>
+            <li>issue 明显不清楚时，<code>notes</code> 里写明任务本身有歧义。</li>
+            <li>测试可能误杀时，谨慎把失败 patch 标成 <code>poor</code>。</li>
+            <li>难度高不等于 agent 错；它只影响你解释失败原因的语气和置信度。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note">公开参考来源：OpenAI SWE-bench Verified annotation results 和 SWE-bench Verified 数据集。我们的标注目标更具体：判断 agent 轨迹能否转成 SFT、DPO、debug/reward 数据。</div>
+    </section>
+
+    <section class="section">
+      <h2><code>patch_quality</code> 标准</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>取值</th>
+            <th>什么时候选</th>
+            <th>典型判断依据</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag ok">close</span></td>
+            <td>agent 改到正确文件和核心逻辑，和 gold patch 思路基本一致，但测试仍未通过或细节有差异。</td>
+            <td>函数位置相同、条件分支接近、边界处理略缺、命名或小语义不同。</td>
+          </tr>
+          <tr>
+            <td><span class="tag warn">partial</span></td>
+            <td>agent 找到相关模块或部分原因，但修复不完整，缺少关键分支、测试、兼容逻辑。</td>
+            <td>改了相关文件但漏掉主要约束；只修一种输入；只加测试不修实现。</td>
+          </tr>
+          <tr>
+            <td><span class="tag bad">poor</span></td>
+            <td>方向明显错误，即使 patch 非空，也和 issue/gold patch 的核心修复关系很弱。</td>
+            <td>改错文件、删除功能、绕过测试、引入无关重构、误解 issue。</td>
+          </tr>
+          <tr>
+            <td><span class="tag">empty</span></td>
+            <td>没有有效 patch，或 patch 只有日志、格式噪声、无意义注释。</td>
+            <td>diff 为空；只改 README；只留下临时输出。</td>
+          </tr>
+          <tr>
+            <td><span class="tag">env_only</span></td>
+            <td>主要失败来自 Docker、依赖、数据集、网络、权限、评测环境，不应该评价 agent patch。</td>
+            <td>环境没起来、镜像失败、安装失败、dataset load fail、权限错误。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2><code>human_failure</code>、SFT 和 DPO 标准</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>人工判断</th>
+            <th>建议</th>
+            <th>原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>环境问题</td>
+            <td><code>human_failure</code> 选 EnvironmentError 类；<code>sft_usable=false</code>；<code>dpo_usable=false</code>。</td>
+            <td>这类样本不能证明 agent 会不会修代码。</td>
+          </tr>
+          <tr>
+            <td>失败 run，但 patch 非空且 gold patch 可用</td>
+            <td>通常 <code>sft_usable=false</code>；如果 agent patch 可作为 rejected，设 <code>dpo_usable=true</code>。</td>
+            <td>失败轨迹不适合直接模仿，但适合构造偏好对。</td>
+          </tr>
+          <tr>
+            <td>已 resolved 或人工确认 patch 正确</td>
+            <td>可考虑 <code>sft_usable=true</code>；如有可比 rejected，再考虑 <code>dpo_usable=true</code>。</td>
+            <td>成功轨迹可以教模型按类似方式修复。</td>
+          </tr>
+          <tr>
+            <td>patch 方向明显错误</td>
+            <td><code>sft_usable=false</code>；只有当错误很清楚且 gold patch 明确时，<code>dpo_usable=true</code>。</td>
+            <td>DPO 需要“坏答案”和“好答案”的对比清楚。</td>
+          </tr>
+          <tr>
+            <td>任务本身不清楚或测试可疑</td>
+            <td>谨慎纳入；在 <code>notes</code> 写明 issue/test 风险。</td>
+            <td>这类样本可能把 benchmark 噪声混进训练数据。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>校准案例</h2>
+      <p>下面是标注时可直接对照的模式。真实标注时，notes 不用很长，但必须能说明“为什么”。</p>
+      <div class="example-grid">
+        <div class="example">
+          <h3>案例 A：接近 gold patch</h3>
+          <span class="tag ok">patch_quality=close</span>
+          <span class="tag">sft_usable=false</span>
+          <span class="tag ok">dpo_usable=true</span>
+          <dl>
+            <dt>看什么</dt>
+            <dd>agent 改了正确函数，核心 try/branch 位置接近 gold patch，但评测未 resolved。</dd>
+            <dt>failure</dt>
+            <dd><code>PatchError.IncompleteFix</code></dd>
+            <dt>notes</dt>
+            <dd>Agent touched the correct file and core logic; keep as DPO rejected because the run did not resolve.</dd>
+          </dl>
+        </div>
+        <div class="example">
+          <h3>案例 B：部分命中</h3>
+          <span class="tag warn">patch_quality=partial</span>
+          <span class="tag">sft_usable=false</span>
+          <span class="tag ok">dpo_usable=true</span>
+          <dl>
+            <dt>看什么</dt>
+            <dd>agent 找到相关模块，但只处理一种输入，gold patch 还有关键兼容分支。</dd>
+            <dt>failure</dt>
+            <dd><code>PatchError.IncompleteFix</code></dd>
+            <dt>notes</dt>
+            <dd>Patch is in the right area but misses the compatibility branch covered by the gold patch.</dd>
+          </dl>
+        </div>
+        <div class="example">
+          <h3>案例 C：方向错误</h3>
+          <span class="tag bad">patch_quality=poor</span>
+          <span class="tag">sft_usable=false</span>
+          <span class="tag">dpo_usable=false</span>
+          <dl>
+            <dt>看什么</dt>
+            <dd>agent 改了无关文件，或通过删除逻辑绕过问题，和 gold patch 不构成清楚偏好对。</dd>
+            <dt>failure</dt>
+            <dd><code>PatchError.WrongBehavior</code></dd>
+            <dt>notes</dt>
+            <dd>Patch changes unrelated behavior and does not address the issue described by the task.</dd>
+          </dl>
+        </div>
+        <div class="example">
+          <h3>案例 D：无有效 patch</h3>
+          <span class="tag">patch_quality=empty</span>
+          <span class="tag">sft_usable=false</span>
+          <span class="tag">dpo_usable=false</span>
+          <dl>
+            <dt>看什么</dt>
+            <dd>diff 为空，或只有日志、注释、格式噪声。</dd>
+            <dt>failure</dt>
+            <dd><code>PatchError.EmptyPatch</code></dd>
+            <dt>notes</dt>
+            <dd>No meaningful code patch was produced, so this run is not useful for SFT or DPO.</dd>
+          </dl>
+        </div>
+        <div class="example">
+          <h3>案例 E：环境失败</h3>
+          <span class="tag">patch_quality=env_only</span>
+          <span class="tag">sft_usable=false</span>
+          <span class="tag">dpo_usable=false</span>
+          <dl>
+            <dt>看什么</dt>
+            <dd>Docker、依赖、网络、dataset 或权限失败，agent 没有机会完成真实修复。</dd>
+            <dt>failure</dt>
+            <dd><code>EnvironmentError.DependencyInstallFail</code></dd>
+            <dt>notes</dt>
+            <dd>Run failed before reliable code evaluation because the environment setup did not complete.</dd>
+          </dl>
+        </div>
+        <div class="example">
+          <h3>案例 F：任务质量可疑</h3>
+          <span class="tag warn">patch_quality=partial</span>
+          <span class="tag">sft_usable=false</span>
+          <span class="tag">dpo_usable=false</span>
+          <dl>
+            <dt>看什么</dt>
+            <dd>issue 很不清楚，或测试像 OpenAI SWE-bench Verified 里的 <code>false_negative</code> 风险。</dd>
+            <dt>failure</dt>
+            <dd><code>TaskError.Underspecified</code></dd>
+            <dt>notes</dt>
+            <dd>Task appears underspecified; avoid using this sample until issue/test quality is reviewed.</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -143,6 +143,7 @@
     <nav class="nav" aria-label="报告导航">
       <a href="project_overview.html">项目全景图</a>
       <a href="progress.html">项目进展</a>
+      <a href="annotation_calibration.html">标注校准页</a>
       <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
     </nav>
   </header>
@@ -189,7 +190,9 @@
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
         已形成真实采集到训练数据的最小闭环。SWE-bench Lite dev 本地 23 个任务已无剩余未跑项；
         当前已新增非破坏式人工 annotation CLI 和本地 Web 复核工作台，review 结果写入
-        <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>，下一步转向标签质检和第一版数据筛选报告。
+        <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>；当前新增
+        <code>reports/annotation_calibration.html</code> 标注校准页，用于对照 OpenAI SWE-bench Verified
+        和 SWE-Trace 的 patch/SFT/DPO 标准。下一步转向标签质检和第一版数据筛选报告。
       </p>
     </section>
 
@@ -492,6 +495,14 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>标注校准页</h3>
+            <p>新增 <code>reports/annotation_calibration.html</code>，把 OpenAI SWE-bench Verified 的人工任务质量标注经验整理为 SWE-Trace 人工复核参考，并明确 <code>patch_quality</code>、<code>human_failure</code>、<code>sft_usable</code>、<code>dpo_usable</code>、<code>notes</code> 五个字段的判断标准。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
@@ -499,6 +510,7 @@
       <h2>下一步</h2>
       <ul>
         <li>启动 <code>scripts/serve_review_ui.sh</code>，继续在网页复核 <code>manual_review_queue.jsonl</code>，把结果写入 <code>manual_annotations.jsonl</code>。</li>
+        <li>复核前先打开 <code>reports/annotation_calibration.html</code> 对齐标注标准，尤其区分 close、partial、poor、empty、env_only。</li>
         <li>基于 annotation 输出第一版数据质量报告，统计 close/partial/poor patch 和 SFT/DPO inclusion。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>

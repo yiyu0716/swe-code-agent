@@ -38,6 +38,8 @@ def test_progress_page_links_to_project_overview() -> None:
 
     assert "project_overview.html" in html
     assert "项目全景图" in html
+    assert "annotation_calibration.html" in html
+    assert "标注校准页" in html
 
 
 def test_review_ui_page_explains_annotation_rules() -> None:
@@ -57,6 +59,41 @@ def test_review_ui_page_explains_annotation_rules() -> None:
         "partial",
         "poor",
         "env_only",
+        "annotation_calibration.html",
+        "标注校准页",
     ]
     for text in required_text:
         assert text in html
+
+
+def test_annotation_calibration_page_documents_labeling_standards() -> None:
+    html_path = REPO_ROOT / "reports" / "annotation_calibration.html"
+    html = html_path.read_text()
+    _Parser().feed(html)
+
+    required_text = [
+        "标注校准页",
+        "OpenAI SWE-bench Verified",
+        "underspecified",
+        "false_negative",
+        "patch_quality",
+        "human_failure",
+        "sft_usable",
+        "dpo_usable",
+        "close",
+        "partial",
+        "poor",
+        "empty",
+        "env_only",
+        "人工复核工作台",
+    ]
+    for text in required_text:
+        assert text in html
+
+
+def test_report_index_links_to_annotation_calibration_page() -> None:
+    html = (REPO_ROOT / "reports" / "index.html").read_text()
+    _Parser().feed(html)
+
+    assert "annotation_calibration.html" in html
+    assert "标注校准页" in html
