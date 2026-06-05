@@ -1,10 +1,16 @@
 import json
 from pathlib import Path
+from http import HTTPStatus
+from http.server import ThreadingHTTPServer
+from threading import Thread
+from urllib.request import ProxyHandler, build_opener
+from urllib.error import HTTPError
 
 import pytest
 
 from swetrace.labeling.review_server import (
     build_review_payload,
+    _make_handler,
     load_run_detail,
     save_annotation,
 )
@@ -168,3 +174,35 @@ def test_save_annotation_upserts_and_rejects_unknown_run(tmp_path) -> None:
                 "dpo_usable": False,
             },
         )
+
+
+def test_review_server_serves_static_report_pages_safely(tmp_path) -> None:
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "annotation_calibration.html").write_text("<h1>标注校准页</h1>")
+    (reports / "data_quality_report.html").write_text("<h1>数据质量报告</h1>")
+    handler = _make_handler(
+        reports=reports,
+        runs=tmp_path / "runs",
+        queue=tmp_path / "queue.jsonl",
+        annotations=tmp_path / "annotations.jsonl",
+    )
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    opener = build_opener(ProxyHandler({}))
+    try:
+        with opener.open(f"{base}/annotation_calibration.html", timeout=3) as response:
+            assert response.status == HTTPStatus.OK
+            assert "标注校准页" in response.read().decode()
+        with opener.open(f"{base}/data_quality_report.html", timeout=3) as response:
+            assert response.status == HTTPStatus.OK
+            assert "数据质量报告" in response.read().decode()
+        with pytest.raises(HTTPError) as excinfo:
+            opener.open(f"{base}/../secret.html", timeout=3)
+        assert excinfo.value.code == HTTPStatus.NOT_FOUND
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)

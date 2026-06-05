@@ -194,7 +194,9 @@
         <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>；当前新增
         <code>reports/annotation_calibration.html</code> 标注校准页，用于对照 OpenAI SWE-bench Verified
         和 SWE-Trace 的 patch/SFT/DPO 标准。当前 29 条 SWE-bench 人工复核队列已全部写入 annotation，
-        另补 1 条 fake resolved baseline 作为成功 sanity sample；下一步转向标签质检和第一版数据筛选报告。
+        另补 1 条 fake resolved baseline 作为成功 sanity sample。人工复核服务 <code>20039</code>
+        已支持直接托管静态报告页，可打开 <code>/annotation_calibration.html</code> 和
+        <code>/data_quality_report.html</code>；下一步转向标签质检和第一版数据筛选报告。
       </p>
     </section>
 
@@ -518,6 +520,14 @@
           <div>
             <h3>数据质量报告</h3>
             <p>新增 <code>reports/data_quality_report.html</code>，按可用/不可用、仓库分布、失败类型和 SFT/DPO 入选规则总结当前 30 条 annotation，并给出 filtered DPO、hard-negative、继续采样和真实 SFT 正样本的下一步路线。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>20039 静态报告路由</h3>
+            <p>修正人工复核服务只托管 <code>/review</code> 导致报告页 404 的问题；<code>swetrace.labeling.review_server</code> 现在可安全服务 <code>reports/*.html</code>，因此 <code>http://127.0.0.1:20039/annotation_calibration.html</code> 和 <code>http://127.0.0.1:20039/data_quality_report.html</code> 可直接打开。</p>
           </div>
           <span>2026-06-05</span>
         </div>

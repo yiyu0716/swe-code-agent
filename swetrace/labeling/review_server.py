@@ -3,7 +3,7 @@ import json
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from swetrace.schema import ReviewAnnotation
 
@@ -142,6 +142,10 @@ def _make_handler(reports: Path, runs: Path, queue: Path, annotations: Path):
                     run_id = parse_qs(parsed.query).get("run_id", [""])[0]
                     self._send_json(load_run_detail(runs=runs, run_id=run_id))
                     return
+                html_path = _html_path_for_request(reports=reports, request_path=parsed.path)
+                if html_path is not None:
+                    self._send_html(html_path)
+                    return
                 self.send_error(HTTPStatus.NOT_FOUND, "Not found")
             except Exception as exc:  # pragma: no cover - exercised by real server smoke.
                 self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
@@ -181,6 +185,19 @@ def _make_handler(reports: Path, runs: Path, queue: Path, annotations: Path):
             self.wfile.write(data)
 
     return ReviewHandler
+
+
+def _html_path_for_request(reports: Path, request_path: str) -> Path | None:
+    relative = unquote(request_path).lstrip("/")
+    if not relative or "/" in relative or "\\" in relative or not relative.endswith(".html"):
+        return None
+    candidate = (reports / relative).resolve()
+    reports_root = reports.resolve()
+    if candidate.parent != reports_root:
+        return None
+    if not candidate.is_file():
+        return None
+    return candidate
 
 
 def _read_json(path: Path) -> dict:
