@@ -40,6 +40,8 @@ def test_progress_page_links_to_project_overview() -> None:
     assert "项目全景图" in html
     assert "annotation_calibration.html" in html
     assert "标注校准页" in html
+    assert "data_quality_report.html" in html
+    assert "数据质量报告" in html
 
 
 def test_review_ui_page_explains_annotation_rules() -> None:
@@ -61,6 +63,8 @@ def test_review_ui_page_explains_annotation_rules() -> None:
         "env_only",
         "annotation_calibration.html",
         "标注校准页",
+        "data_quality_report.html",
+        "数据质量报告",
     ]
     for text in required_text:
         assert text in html
@@ -86,14 +90,45 @@ def test_annotation_calibration_page_documents_labeling_standards() -> None:
         "empty",
         "env_only",
         "人工复核工作台",
+        "data_quality_report.html",
+        "数据质量报告",
     ]
     for text in required_text:
         assert text in html
 
 
-def test_report_index_links_to_annotation_calibration_page() -> None:
+def test_report_index_links_to_annotation_calibration_page_and_quality_report() -> None:
     html = (REPO_ROOT / "reports" / "index.html").read_text()
     _Parser().feed(html)
 
     assert "annotation_calibration.html" in html
     assert "标注校准页" in html
+    assert "data_quality_report.html" in html
+    assert "数据质量报告" in html
+
+
+def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
+    html_path = REPO_ROOT / "reports" / "data_quality_report.html"
+    html = html_path.read_text()
+    _Parser().feed(html)
+
+    required_text = [
+        "数据质量报告",
+        "manual_annotations.jsonl",
+        "30 条 annotation",
+        "close=10",
+        "partial=12",
+        "poor=2",
+        "empty=1",
+        "env_only=5",
+        "SFT 可用 1",
+        "DPO 可用 20",
+        "仓库分布",
+        "失败类型",
+        "SFT 入选规则",
+        "DPO 入选规则",
+        "可用/不可用",
+        "下一步",
+    ]
+    for text in required_text:
+        assert text in html

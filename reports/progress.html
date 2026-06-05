@@ -144,6 +144,7 @@
       <a href="project_overview.html">项目全景图</a>
       <a href="progress.html">项目进展</a>
       <a href="annotation_calibration.html">标注校准页</a>
+      <a href="data_quality_report.html">数据质量报告</a>
       <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
     </nav>
   </header>
@@ -512,13 +513,21 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>数据质量报告</h3>
+            <p>新增 <code>reports/data_quality_report.html</code>，按可用/不可用、仓库分布、失败类型和 SFT/DPO 入选规则总结当前 30 条 annotation，并给出 filtered DPO、hard-negative、继续采样和真实 SFT 正样本的下一步路线。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>基于当前 30 条 annotation 输出第一版数据质量报告，统计 close/partial/poor patch 和 SFT/DPO inclusion。</li>
+        <li>基于 <code>reports/data_quality_report.html</code> 的规则导出第一版 filtered DPO JSONL 和 hard-negative JSONL。</li>
         <li>用 <code>reports/annotation_calibration.html</code> 继续校准新采样本，后续人工复核只需重点看新增 run。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
