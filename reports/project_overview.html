@@ -181,6 +181,7 @@
     </p>
     <nav class="nav" aria-label="报告导航">
       <a href="progress.html">返回项目进展</a>
+      <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
       <a href="#flow">端到端流程图</a>
       <a href="#manual">人工介入说明</a>
       <a href="#artifacts">数据产物地图</a>
@@ -415,7 +416,7 @@
         <li>查看对应 run 目录里的 <code>task.json</code>、<code>gold_patch</code>、<code>patch.diff</code>、<code>report.json</code> 和 <code>test.log</code>。</li>
         <li>判断自动标签是否正确：环境失败、patch 应用失败、未完整修复、测试失败。</li>
         <li>判断 <code>patch_quality</code>：<code>close</code>、<code>partial</code>、<code>poor</code>、<code>empty</code>、<code>env_only</code>。</li>
-        <li>用 <code>scripts/annotate_review.sh</code> 写入人工结论，结果进入 <code>manual_annotations.jsonl</code>。</li>
+        <li>优先使用 <code>scripts/serve_review_ui.sh</code> 打开 Web 工作台，或用 <code>scripts/annotate_review.sh</code> 写入人工结论，结果进入 <code>manual_annotations.jsonl</code>。</li>
       </ol>
       <div class="callout">
         <p><strong>推荐复核顺序：</strong>先看 pydicom 和 pyvista，因为 patch 小、gold patch 明确；再看 astroid、pvlib、marshmallow、sqlfluff。</p>

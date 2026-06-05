@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWE-Trace 人工复核工作台</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #657083;
+      --line: #dfe4ea;
+      --accent: #1769aa;
+      --accent-soft: #e7f1fb;
+      --ok: #177245;
+      --warn: #9b6200;
+      --bad: #b53b35;
+      --code-bg: #0f1724;
+      --code-text: #e6edf5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.52;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 22px;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    h3 { font-size: 14px; margin-bottom: 6px; }
+    p { margin: 7px 0 0; color: var(--muted); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      background: #eef2f6;
+      border-radius: 5px;
+      padding: 2px 5px;
+      color: #253449;
+    }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .nav a, button, select, textarea {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfd;
+      color: var(--text);
+      font: inherit;
+    }
+    .nav a, button {
+      padding: 8px 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    main {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr) 370px;
+      gap: 14px;
+      padding: 14px;
+      min-height: calc(100vh - 98px);
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-width: 0;
+    }
+    .panel-head {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+    }
+    .panel-body { padding: 12px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      background: #fbfcfd;
+    }
+    .stat strong { display: block; color: var(--accent); font-size: 20px; }
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 8px;
+      background: #fff;
+    }
+    .task-list {
+      display: grid;
+      gap: 8px;
+      max-height: calc(100vh - 260px);
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .task {
+      width: 100%;
+      text-align: left;
+      background: #fbfcfd;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .task.active { border-color: var(--accent); background: var(--accent-soft); }
+    .task .id { display: block; font-weight: 750; color: var(--text); }
+    .task .meta { display: block; color: var(--muted); font-size: 12px; margin-top: 5px; }
+    .badge {
+      display: inline-flex;
+      width: max-content;
+      border-radius: 999px;
+      padding: 3px 7px;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 750;
+      background: #eef2f6;
+      color: var(--muted);
+    }
+    .badge.done { background: #e7f5ec; color: var(--ok); }
+    .badge.todo { background: #fff5e3; color: var(--warn); }
+    .detail-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .block {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      min-width: 0;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 6px 10px;
+      font-size: 14px;
+    }
+    .kv span:nth-child(odd) { color: var(--muted); }
+    pre {
+      margin: 8px 0 0;
+      max-height: 300px;
+      overflow: auto;
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+    label { display: grid; gap: 5px; font-weight: 700; }
+    label span { color: var(--muted); font-size: 12px; font-weight: 500; }
+    .check-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px;
+      background: #fbfcfd;
+      font-weight: 700;
+    }
+    .check input { width: 18px; height: 18px; }
+    .rules {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .rule {
+      border-left: 4px solid var(--accent);
+      background: #f9fbfd;
+      border-radius: 6px;
+      padding: 9px 10px;
+    }
+    .rule strong { color: var(--text); }
+    .status-line {
+      min-height: 22px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    .status-line.ok { color: var(--ok); }
+    .status-line.bad { color: var(--bad); }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+      .task-list { max-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>人工复核工作台</h1>
+        <p>在浏览器中查看每条 SWE-Trace run 的 issue、gold patch、agent patch、测试结果，并保存人工 annotation。</p>
+      </div>
+      <nav class="nav" aria-label="报告导航">
+        <a href="progress.html">项目进展</a>
+        <a href="project_overview.html">项目全景图</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>待复核样本</h2>
+        <p>数据来自 <code>/api/review-items</code>，保存后写入 <code>/api/annotations</code>。</p>
+        <div class="stats">
+          <div class="stat"><strong id="stat-total">0</strong><span>总数</span></div>
+          <div class="stat"><strong id="stat-done">0</strong><span>已标</span></div>
+          <div class="stat"><strong id="stat-left">0</strong><span>剩余</span></div>
+        </div>
+        <div class="filters">
+          <select id="filter-status" aria-label="标注状态过滤">
+            <option value="all">全部</option>
+            <option value="todo">未标注</option>
+            <option value="done">已标注</option>
+          </select>
+          <select id="filter-repo" aria-label="仓库过滤">
+            <option value="all">全部仓库</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="task-list" class="task-list"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>样本详情</h2>
+        <p id="selected-title">请选择左侧一个 run。</p>
+      </div>
+      <div class="panel-body detail-grid">
+        <div class="block">
+          <h3>任务与报告</h3>
+          <div id="summary" class="kv"></div>
+        </div>
+        <div class="block">
+          <h3>Issue 描述</h3>
+          <pre id="issue"></pre>
+        </div>
+        <div class="block">
+          <h3>Gold Patch</h3>
+          <pre id="gold-patch"></pre>
+        </div>
+        <div class="block">
+          <h3>Agent Patch</h3>
+          <pre id="agent-patch"></pre>
+        </div>
+        <div class="block">
+          <h3>Test Log</h3>
+          <pre id="test-log"></pre>
+        </div>
+        <div class="block">
+          <h3>Trajectory Preview</h3>
+          <pre id="trajectory"></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>保存人工标注</h2>
+        <p>先看 gold patch 和 agent patch，再按规则选择质量和可用性。</p>
+      </div>
+      <div class="panel-body">
+        <form id="annotation-form" class="form-grid">
+          <label>
+            human_failure
+            <span>人工确认的主要失败原因。</span>
+            <select id="human-failure" required>
+              <option value="PatchError.IncompleteFix">PatchError.IncompleteFix</option>
+              <option value="PatchError.PatchApplyFail">PatchError.PatchApplyFail</option>
+              <option value="TestError.UnitTestFail">TestError.UnitTestFail</option>
+              <option value="EnvironmentError.DatasetLoadFail">EnvironmentError.DatasetLoadFail</option>
+              <option value="EnvironmentError.DockerFail">EnvironmentError.DockerFail</option>
+              <option value="EnvironmentError.DependencyInstallFail">EnvironmentError.DependencyInstallFail</option>
+            </select>
+          </label>
+          <label>
+            patch_quality
+            <span>Agent patch 相对 gold patch 的质量。</span>
+            <select id="patch-quality" required>
+              <option value="close">close</option>
+              <option value="partial">partial</option>
+              <option value="poor">poor</option>
+              <option value="empty">empty</option>
+              <option value="env_only">env_only</option>
+            </select>
+          </label>
+          <div class="check-row">
+            <label class="check"><input id="sft-usable" type="checkbox"> SFT 可用</label>
+            <label class="check"><input id="dpo-usable" type="checkbox" checked> DPO 可用</label>
+          </div>
+          <label>
+            notes
+            <span>一句话说明你的判断依据。</span>
+            <textarea id="notes" rows="5" placeholder="例如：Agent touched the correct file and implemented the core idea, but tests still failed."></textarea>
+          </label>
+          <button id="save" class="primary" type="submit" disabled>保存标注</button>
+          <div id="status" class="status-line"></div>
+        </form>
+
+        <div class="rules">
+          <div class="rule"><strong>patch_quality 标准：</strong><code>close</code> 基本接近 gold patch；<code>partial</code> 改到相关区域但不完整；<code>poor</code> 明显跑偏；<code>empty</code> 没有有效 patch；<code>env_only</code> 主要是环境失败。</div>
+          <div class="rule"><strong>SFT 可用标准：</strong>通常只有 resolved 或人工确认高质量正样本才设为 true；失败 patch 默认 false。</div>
+          <div class="rule"><strong>DPO 可用标准：</strong>有 gold patch、agent patch 非空、不是环境错误，并且 agent 未解决时，一般可设为 true。</div>
+          <div class="rule"><strong>环境错误规则：</strong>如果是 Docker、dataset、dependency 等环境问题，选择对应 EnvironmentError，patch_quality 用 <code>env_only</code>，SFT/DPO 都设为 false。</div>
+          <div class="rule"><strong>close 但 failed：</strong>如果 patch 很接近 gold patch 但 run 未 resolved，SFT 保持 false，DPO 通常 true，notes 写清楚差异。</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = { items: [], selected: null };
+    const listEl = document.getElementById('task-list');
+    const statusEl = document.getElementById('status');
+
+    function repoKey(taskId) {
+      return taskId.split('-')[0];
+    }
+
+    function text(value) {
+      if (value === null || value === undefined || value === '') return '(empty)';
+      if (typeof value === 'string') return value;
+      return JSON.stringify(value, null, 2);
+    }
+
+    async function loadItems() {
+      const res = await fetch('/api/review-items');
+      const payload = await res.json();
+      state.items = payload.items || [];
+      document.getElementById('stat-total').textContent = payload.total || 0;
+      document.getElementById('stat-done').textContent = payload.annotated || 0;
+      document.getElementById('stat-left').textContent = (payload.total || 0) - (payload.annotated || 0);
+      populateRepoFilter();
+      renderList();
+      const firstTodo = state.items.find(item => !item.is_annotated) || state.items[0];
+      if (firstTodo) selectRun(firstTodo.run_id);
+    }
+
+    function populateRepoFilter() {
+      const filter = document.getElementById('filter-repo');
+      const current = filter.value;
+      const repos = [...new Set(state.items.map(item => repoKey(item.task_id)))].sort();
+      filter.innerHTML = '<option value="all">全部仓库</option>' + repos.map(repo => `<option value="${repo}">${repo}</option>`).join('');
+      filter.value = repos.includes(current) ? current : 'all';
+    }
+
+    function renderList() {
+      const statusFilter = document.getElementById('filter-status').value;
+      const repoFilter = document.getElementById('filter-repo').value;
+      const items = state.items.filter(item => {
+        if (statusFilter === 'todo' && item.is_annotated) return false;
+        if (statusFilter === 'done' && !item.is_annotated) return false;
+        if (repoFilter !== 'all' && repoKey(item.task_id) !== repoFilter) return false;
+        return true;
+      });
+      listEl.innerHTML = items.map(item => `
+        <button class="task ${state.selected === item.run_id ? 'active' : ''}" type="button" data-run="${item.run_id}">
+          <span class="id">${item.task_id}</span>
+          <span class="meta">${item.primary_failure} · severity ${item.severity}</span>
+          <span class="badge ${item.is_annotated ? 'done' : 'todo'}">${item.is_annotated ? '已标注' : '未标注'}</span>
+        </button>
+      `).join('');
+      for (const button of listEl.querySelectorAll('button')) {
+        button.addEventListener('click', () => selectRun(button.dataset.run));
+      }
+    }
+
+    async function selectRun(runId) {
+      state.selected = runId;
+      renderList();
+      const item = state.items.find(row => row.run_id === runId);
+      document.getElementById('selected-title').textContent = item ? `${item.task_id} · ${runId}` : runId;
+      const res = await fetch(`/api/run?run_id=${encodeURIComponent(runId)}`);
+      const detail = await res.json();
+      if (detail.error) {
+        setStatus(detail.error, false);
+        return;
+      }
+      renderDetail(detail);
+      fillForm(item);
+      document.getElementById('save').disabled = false;
+    }
+
+    function renderDetail(detail) {
+      const task = detail.task || {};
+      const report = detail.report || {};
+      const label = detail.label || {};
+      document.getElementById('summary').innerHTML = [
+        ['task_id', task.task_id],
+        ['repo', task.repo],
+        ['status', report.status],
+        ['patch_apply', report.patch_apply],
+        ['tests_passed', report.tests_passed],
+        ['resolved', report.resolved],
+        ['auto_failure', label.primary_failure],
+        ['run_dir', detail.paths && detail.paths.run_dir],
+      ].map(([k, v]) => `<span>${k}</span><strong>${text(v)}</strong>`).join('');
+      document.getElementById('issue').textContent = text(task.issue_text);
+      document.getElementById('gold-patch').textContent = text(task.gold_patch);
+      document.getElementById('agent-patch').textContent = text(detail.patch);
+      document.getElementById('test-log').textContent = text(detail.test_log);
+      document.getElementById('trajectory').textContent = text(detail.trajectory_preview);
+    }
+
+    function fillForm(item) {
+      const annotation = item && item.annotation;
+      document.getElementById('human-failure').value = (annotation && annotation.human_failure) || (item && item.primary_failure) || 'PatchError.IncompleteFix';
+      document.getElementById('patch-quality').value = (annotation && annotation.patch_quality) || defaultPatchQuality(item);
+      document.getElementById('sft-usable').checked = annotation ? annotation.sft_usable : Boolean(item && item.is_data_usable_for_sft);
+      document.getElementById('dpo-usable').checked = annotation ? annotation.dpo_usable : Boolean(item && item.is_data_usable_for_dpo);
+      document.getElementById('notes').value = (annotation && annotation.notes) || '';
+      setStatus(annotation ? '已加载已有标注，可修改后再次保存。' : '未标注。请阅读详情后保存人工判断。', true);
+    }
+
+    function defaultPatchQuality(item) {
+      if (!item) return 'partial';
+      if (item.status === 'env_error' || item.primary_failure.startsWith('EnvironmentError')) return 'env_only';
+      if (!item.patch_preview) return 'empty';
+      return 'partial';
+    }
+
+    function setStatus(message, ok) {
+      statusEl.textContent = message;
+      statusEl.className = `status-line ${ok ? 'ok' : 'bad'}`;
+    }
+
+    document.getElementById('filter-status').addEventListener('change', renderList);
+    document.getElementById('filter-repo').addEventListener('change', renderList);
+    document.getElementById('annotation-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!state.selected) return;
+      const payload = {
+        run_id: state.selected,
+        human_failure: document.getElementById('human-failure').value,
+        patch_quality: document.getElementById('patch-quality').value,
+        sft_usable: document.getElementById('sft-usable').checked,
+        dpo_usable: document.getElementById('dpo-usable').checked,
+        notes: document.getElementById('notes').value,
+      };
+      const res = await fetch('/api/annotations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        setStatus(result.error || '保存失败', false);
+        return;
+      }
+      setStatus(`保存成功：${result.updated}`, true);
+      await loadItems();
+      state.selected = payload.run_id;
+      renderList();
+    });
+
+    loadItems().catch(error => setStatus(String(error), false));
+  </script>
+</body>
+</html>

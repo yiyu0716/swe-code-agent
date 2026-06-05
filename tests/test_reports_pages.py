@@ -38,3 +38,25 @@ def test_progress_page_links_to_project_overview() -> None:
 
     assert "project_overview.html" in html
     assert "项目全景图" in html
+
+
+def test_review_ui_page_explains_annotation_rules() -> None:
+    html_path = REPO_ROOT / "reports" / "review_ui.html"
+    html = html_path.read_text()
+    _Parser().feed(html)
+
+    required_text = [
+        "人工复核工作台",
+        "patch_quality 标准",
+        "SFT 可用标准",
+        "DPO 可用标准",
+        "保存标注",
+        "/api/review-items",
+        "/api/annotations",
+        "close",
+        "partial",
+        "poor",
+        "env_only",
+    ]
+    for text in required_text:
+        assert text in html

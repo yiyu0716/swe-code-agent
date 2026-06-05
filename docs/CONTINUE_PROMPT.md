@@ -26,6 +26,7 @@
 - orphan raw mini trajectory 恢复 CLI：`recover_mini_runs.sh`
 - SWE-bench parquet metadata 回填 CLI：`enrich_swebench_run_tasks.sh`
 - 人工 review annotation CLI：`annotate_review.sh`
+- 人工 review Web UI：`serve_review_ui.sh`，默认 <http://127.0.0.1:20039/review>
 - gold-patch vs agent-patch DPO pair 构建
 - 当前 `/data/yiyuldx/swe/outputs/datasets` 已有 SFT plan 30、patch 24、debug 24、reward 30、DPO pairs 23
 - 当前 SWE-bench Lite dev 本地任务已跑完；下一批优先继续人工复核、标签质检和数据质量报告
@@ -46,7 +47,7 @@
    `SWETRACE_MINI_SUBSET=/data/yiyuldx/swe/cache/swebench_lite SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 ./scripts/run_mini_smoke.sh`
 6. 如果生成真实 `.traj.json`，检查 `trajectory.jsonl`、`patch.diff`、`test.log`、`report.json`，必要时修正 `swetrace/adapters/mini_swe_agent.py` 的 parser 并加测试。
 7. 先检查 task selector 是否仍返回 0 个 dev candidates；若是，转入人工复核与数据质检。
-8. 使用 `scripts/annotate_review.sh` 记录人工标签、patch 质量和 train/eval inclusion。
+8. 使用 `scripts/serve_review_ui.sh` 打开网页标注，或使用 `scripts/annotate_review.sh` 记录人工标签、patch 质量和 train/eval inclusion。
 9. 检查 `/data/yiyuldx/swe/outputs/datasets/dpo_pairs.jsonl`、`reward_logs.jsonl` 和 `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`。
 10. 每次项目推进都更新 `/home/yiyuldx/swe/reports/progress.html`，并保持 GitHub 同步到 `https://github.com/yiyu0716/swe-code-agent.git`。
 

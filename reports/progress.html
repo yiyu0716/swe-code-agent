@@ -143,6 +143,7 @@
     <nav class="nav" aria-label="报告导航">
       <a href="project_overview.html">项目全景图</a>
       <a href="progress.html">项目进展</a>
+      <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
     </nav>
   </header>
 
@@ -156,7 +157,7 @@
       <div class="card">
         <h3>自动标签</h3>
         <span class="metric">30</span>
-        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 29 条，人工 annotation smoke 1 条</p>
+        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 29 条，人工 annotation smoke 2 条</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
@@ -187,7 +188,7 @@
         当前已覆盖 24 个 unique mini-SWE-agent task id；25 条 raw mini 轨迹已标准化。
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
         已形成真实采集到训练数据的最小闭环。SWE-bench Lite dev 本地 23 个任务已无剩余未跑项；
-        当前已新增非破坏式人工 annotation CLI，review 结果写入
+        当前已新增非破坏式人工 annotation CLI 和本地 Web 复核工作台，review 结果写入
         <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>，下一步转向标签质检和第一版数据筛选报告。
       </p>
     </section>
@@ -483,13 +484,21 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>人工复核 Web 工作台</h3>
+            <p>新增 <code>scripts/serve_review_ui.sh</code> 和 <code>reports/review_ui.html</code>，在 <code>http://127.0.0.1:20039/review</code> 可视化查看 issue、gold patch、agent patch、test log 和标注规则，并已通过 Web API 为 <code>pydicom__pydicom-1139</code> 写入 smoke annotation。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>继续人工复核 <code>/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl</code>，把结果写入 <code>manual_annotations.jsonl</code>。</li>
+        <li>启动 <code>scripts/serve_review_ui.sh</code>，继续在网页复核 <code>manual_review_queue.jsonl</code>，把结果写入 <code>manual_annotations.jsonl</code>。</li>
         <li>基于 annotation 输出第一版数据质量报告，统计 close/partial/poor patch 和 SFT/DPO inclusion。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
