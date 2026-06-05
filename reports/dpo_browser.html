@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWE-Trace DPO 数据浏览器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #657083;
+      --line: #dfe4ea;
+      --accent: #1769aa;
+      --accent-soft: #e7f1fb;
+      --ok: #177245;
+      --warn: #9b6200;
+      --bad: #b53b35;
+      --code-bg: #0f1724;
+      --code-text: #e6edf5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.52;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 20px 24px;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 18px; margin-bottom: 8px; }
+    h3 { font-size: 14px; margin-bottom: 6px; }
+    p { margin: 7px 0 0; color: var(--muted); }
+    code {
+      background: #eef2f6;
+      border-radius: 5px;
+      padding: 2px 5px;
+      color: #253449;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .nav, .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .nav a, button {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfd;
+      color: var(--accent);
+      padding: 8px 10px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-width: 0;
+    }
+    .panel-head {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+    }
+    .panel-body { padding: 12px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      background: #fbfcfd;
+    }
+    .stat strong {
+      display: block;
+      color: var(--accent);
+      font-size: 20px;
+    }
+    .list {
+      display: grid;
+      gap: 8px;
+      max-height: calc(100vh - 300px);
+      overflow: auto;
+    }
+    .item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 10px;
+      color: var(--text);
+    }
+    .item.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .item strong { display: block; }
+    .item span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .badge {
+      display: inline-flex;
+      width: max-content;
+      border-radius: 999px;
+      padding: 3px 7px;
+      margin: 6px 5px 0 0;
+      font-size: 12px;
+      font-weight: 750;
+      background: #eef2f6;
+      color: var(--muted);
+    }
+    .badge.close { background: #e7f5ec; color: var(--ok); }
+    .badge.partial { background: #fff5e3; color: var(--warn); }
+    .badge.poor { background: #fae9e7; color: var(--bad); }
+    .detail-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 6px 10px;
+      font-size: 14px;
+    }
+    .meta span:nth-child(odd) { color: var(--muted); }
+    .pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    pre {
+      margin: 8px 0 0;
+      max-height: 420px;
+      overflow: auto;
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+      .pair { grid-template-columns: 1fr; }
+      .list { max-height: 380px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>DPO 数据浏览器</h1>
+        <p>浏览 <code>/data/yiyuldx/swe/outputs/datasets/v0.1</code> 导出的 <code>dpo_main.jsonl</code>、<code>dpo_hard_negative.jsonl</code> 和 <code>sft_sanity.jsonl</code>。</p>
+      </div>
+      <nav class="nav" aria-label="报告导航">
+        <a href="index.html">报告入口</a>
+        <a href="data_quality_report.html">数据质量报告</a>
+        <a href="annotation_calibration.html">标注校准页</a>
+        <a href="review">人工复核工作台</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>数据 split</h2>
+        <div class="tabs">
+          <button class="active" data-split="main">main</button>
+          <button data-split="hard">hard-negative</button>
+          <button data-split="sft">sft-sanity</button>
+          <button data-split="excluded">excluded</button>
+        </div>
+        <p>数据来自 <code>/api/dpo-dataset</code>，chosen 通常是 SWE-bench gold patch，rejected 是 agent patch。</p>
+        <div class="stats">
+          <div class="stat"><strong id="stat-total">0</strong><span>当前 split</span></div>
+          <div class="stat"><strong id="stat-main">18</strong><span>dpo_main</span></div>
+          <div class="stat"><strong id="stat-hard">2</strong><span>hard</span></div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="list" class="list"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2 id="title">请选择一个样本</h2>
+        <p id="subtitle">查看 prompt、chosen、rejected、patch_quality 和 notes。</p>
+      </div>
+      <div class="panel-body detail-grid">
+        <div class="meta" id="meta"></div>
+        <div>
+          <h3>Prompt</h3>
+          <pre id="prompt"></pre>
+        </div>
+        <div class="pair">
+          <div>
+            <h3>chosen</h3>
+            <pre id="chosen"></pre>
+          </div>
+          <div>
+            <h3>rejected</h3>
+            <pre id="rejected"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = { split: 'main', items: [], selected: null, manifest: null };
+    const listEl = document.getElementById('list');
+
+    function text(value) {
+      if (value === null || value === undefined || value === '') return '(empty)';
+      if (typeof value === 'string') return value;
+      return JSON.stringify(value, null, 2);
+    }
+
+    async function loadSplit(split) {
+      state.split = split;
+      document.querySelectorAll('[data-split]').forEach(button => {
+        button.classList.toggle('active', button.dataset.split === split);
+      });
+      const res = await fetch(`/api/dpo-dataset?split=${encodeURIComponent(split)}`);
+      if (!res.ok) throw new Error(await res.text());
+      const payload = await res.json();
+      state.items = payload.items || [];
+      state.manifest = payload.manifest || {};
+      document.getElementById('stat-total').textContent = payload.total || 0;
+      const counts = state.manifest.counts || {};
+      document.getElementById('stat-main').textContent = counts.dpo_main || 0;
+      document.getElementById('stat-hard').textContent = counts.dpo_hard_negative || 0;
+      renderList();
+      selectItem(state.items[0] || null);
+    }
+
+    function renderList() {
+      listEl.innerHTML = '';
+      state.items.forEach((item, index) => {
+        const meta = item.meta || item;
+        const button = document.createElement('button');
+        button.className = 'item';
+        button.innerHTML = `
+          <strong>${meta.task_id || meta.run_id || `item-${index + 1}`}</strong>
+          <span>${meta.repo || ''}</span>
+          <span class="badge ${meta.patch_quality || ''}">patch_quality=${meta.patch_quality || 'n/a'}</span>
+          <span class="badge">notes</span>
+        `;
+        button.addEventListener('click', () => selectItem(item));
+        listEl.appendChild(button);
+      });
+    }
+
+    function selectItem(item) {
+      state.selected = item;
+      document.querySelectorAll('.item').forEach((button, index) => {
+        button.classList.toggle('active', state.items[index] === item);
+      });
+      if (!item) {
+        document.getElementById('title').textContent = '当前 split 没有样本';
+        document.getElementById('subtitle').textContent = '';
+        document.getElementById('meta').innerHTML = '';
+        document.getElementById('prompt').textContent = '';
+        document.getElementById('chosen').textContent = '';
+        document.getElementById('rejected').textContent = '';
+        return;
+      }
+      const meta = item.meta || item;
+      document.getElementById('title').textContent = meta.task_id || meta.run_id || 'DPO sample';
+      document.getElementById('subtitle').textContent = meta.notes || 'No notes.';
+      document.getElementById('meta').innerHTML = [
+        ['run_id', meta.run_id],
+        ['repo', meta.repo],
+        ['patch_quality', meta.patch_quality],
+        ['human_failure', meta.human_failure],
+        ['dpo_usable', meta.dpo_usable],
+        ['sft_usable', meta.sft_usable],
+        ['notes', meta.notes],
+      ].map(([k, v]) => `<span>${k}</span><span>${text(v)}</span>`).join('');
+      document.getElementById('prompt').textContent = text(item.prompt);
+      document.getElementById('chosen').textContent = text(item.chosen || item.output);
+      document.getElementById('rejected').textContent = text(item.rejected);
+    }
+
+    document.querySelectorAll('[data-split]').forEach(button => {
+      button.addEventListener('click', () => loadSplit(button.dataset.split).catch(error => {
+        document.getElementById('subtitle').textContent = String(error);
+      }));
+    });
+
+    loadSplit('main').catch(error => {
+      document.getElementById('subtitle').textContent = String(error);
+    });
+  </script>
+</body>
+</html>

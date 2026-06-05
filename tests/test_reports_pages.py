@@ -42,6 +42,8 @@ def test_progress_page_links_to_project_overview() -> None:
     assert "标注校准页" in html
     assert "data_quality_report.html" in html
     assert "数据质量报告" in html
+    assert "dpo_browser.html" in html
+    assert "DPO 数据浏览器" in html
 
 
 def test_review_ui_page_explains_annotation_rules() -> None:
@@ -105,6 +107,8 @@ def test_report_index_links_to_annotation_calibration_page_and_quality_report() 
     assert "标注校准页" in html
     assert "data_quality_report.html" in html
     assert "数据质量报告" in html
+    assert "dpo_browser.html" in html
+    assert "DPO 数据浏览器" in html
 
 
 def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
@@ -129,6 +133,27 @@ def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
         "DPO 入选规则",
         "可用/不可用",
         "下一步",
+    ]
+    for text in required_text:
+        assert text in html
+
+
+def test_dpo_browser_page_documents_splits_and_loads_api() -> None:
+    html_path = REPO_ROOT / "reports" / "dpo_browser.html"
+    html = html_path.read_text()
+    _Parser().feed(html)
+
+    required_text = [
+        "DPO 数据浏览器",
+        "dpo_main.jsonl",
+        "dpo_hard_negative.jsonl",
+        "sft_sanity.jsonl",
+        "/api/dpo-dataset",
+        "chosen",
+        "rejected",
+        "patch_quality",
+        "notes",
+        "数据质量报告",
     ]
     for text in required_text:
         assert text in html

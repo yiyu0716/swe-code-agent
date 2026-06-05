@@ -11,6 +11,7 @@ import pytest
 from swetrace.labeling.review_server import (
     build_review_payload,
     _make_handler,
+    load_dpo_dataset,
     load_run_detail,
     save_annotation,
 )
@@ -202,6 +203,100 @@ def test_review_server_serves_static_report_pages_safely(tmp_path) -> None:
         with pytest.raises(HTTPError) as excinfo:
             opener.open(f"{base}/../secret.html", timeout=3)
         assert excinfo.value.code == HTTPStatus.NOT_FOUND
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_load_dpo_dataset_returns_versioned_split_items(tmp_path) -> None:
+    dataset = tmp_path / "v0.1"
+    dataset.mkdir()
+    (dataset / "manifest.json").write_text(
+        json.dumps(
+            {
+                "version": "v0.1-test",
+                "counts": {"dpo_main": 1},
+                "files": {"dpo_main": str(dataset / "dpo_main.jsonl")},
+            }
+        )
+    )
+    (dataset / "dpo_main.jsonl").write_text(
+        json.dumps(
+            {
+                "type": "dpo_pair",
+                "prompt": "Issue: fix it",
+                "chosen": "gold patch",
+                "rejected": "agent patch",
+                "meta": {
+                    "run_id": "run-1",
+                    "task_id": "task-1",
+                    "patch_quality": "close",
+                    "notes": "Good DPO candidate.",
+                },
+            }
+        )
+        + "\n"
+    )
+
+    payload = load_dpo_dataset(dataset=dataset, split="main")
+
+    assert payload["split"] == "main"
+    assert payload["total"] == 1
+    assert payload["manifest"]["version"] == "v0.1-test"
+    assert payload["items"][0]["chosen"] == "gold patch"
+    assert payload["items"][0]["rejected"] == "agent patch"
+
+
+def test_load_dpo_dataset_rejects_unknown_split(tmp_path) -> None:
+    with pytest.raises(ValueError, match="unknown DPO split"):
+        load_dpo_dataset(dataset=tmp_path, split="missing")
+
+
+def test_review_server_dpo_api_uses_configured_dataset_path(tmp_path) -> None:
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    dataset = tmp_path / "datasets" / "v-test"
+    dataset.mkdir(parents=True)
+    (dataset / "manifest.json").write_text(
+        json.dumps(
+            {
+                "version": "v-test",
+                "counts": {"dpo_main": 1},
+                "files": {"dpo_main": str(dataset / "dpo_main.jsonl")},
+            }
+        )
+    )
+    (dataset / "dpo_main.jsonl").write_text(
+        json.dumps(
+            {
+                "type": "dpo_pair",
+                "prompt": "Issue: use configured dataset",
+                "chosen": "gold patch",
+                "rejected": "agent patch",
+                "meta": {"run_id": "run-custom", "task_id": "task-custom"},
+            }
+        )
+        + "\n"
+    )
+    handler = _make_handler(
+        reports=reports,
+        runs=tmp_path / "runs",
+        queue=tmp_path / "queue.jsonl",
+        annotations=tmp_path / "annotations.jsonl",
+        dpo_dataset=dataset,
+    )
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    opener = build_opener(ProxyHandler({}))
+    try:
+        with opener.open(f"{base}/api/dpo-dataset?split=main", timeout=3) as response:
+            payload = json.loads(response.read().decode())
+        assert payload["manifest"]["version"] == "v-test"
+        assert payload["items"][0]["meta"]["run_id"] == "run-custom"
+        assert payload["path"] == str(dataset / "dpo_main.jsonl")
     finally:
         server.shutdown()
         server.server_close()

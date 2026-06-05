@@ -11,6 +11,13 @@ DEFAULT_RUNS = Path("/data/yiyuldx/swe/runs")
 DEFAULT_QUEUE = Path("/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl")
 DEFAULT_ANNOTATIONS = Path("/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl")
 DEFAULT_REPORTS = Path("/home/yiyuldx/swe/reports")
+DEFAULT_DPO_DATASET = Path("/data/yiyuldx/swe/outputs/datasets/v0.1")
+_DPO_SPLITS = {
+    "main": "dpo_main.jsonl",
+    "hard": "dpo_hard_negative.jsonl",
+    "sft": "sft_sanity.jsonl",
+    "excluded": "excluded.jsonl",
+}
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -75,6 +82,20 @@ def load_run_detail(runs: Path = DEFAULT_RUNS, run_id: str = "") -> dict:
     }
 
 
+def load_dpo_dataset(dataset: Path = DEFAULT_DPO_DATASET, split: str = "main") -> dict:
+    filename = _DPO_SPLITS.get(split)
+    if filename is None:
+        raise ValueError(f"unknown DPO split: {split}")
+    path = dataset / filename
+    return {
+        "split": split,
+        "path": str(path),
+        "manifest": _read_json(dataset / "manifest.json"),
+        "total": len(read_jsonl(path)),
+        "items": read_jsonl(path),
+    }
+
+
 def save_annotation(
     queue: Path = DEFAULT_QUEUE,
     out: Path = DEFAULT_ANNOTATIONS,
@@ -115,14 +136,27 @@ def serve(
     runs: Path = DEFAULT_RUNS,
     queue: Path = DEFAULT_QUEUE,
     annotations: Path = DEFAULT_ANNOTATIONS,
+    dpo_dataset: Path = DEFAULT_DPO_DATASET,
 ) -> None:
-    handler = _make_handler(reports=reports, runs=runs, queue=queue, annotations=annotations)
+    handler = _make_handler(
+        reports=reports,
+        runs=runs,
+        queue=queue,
+        annotations=annotations,
+        dpo_dataset=dpo_dataset,
+    )
     server = ThreadingHTTPServer((host, port), handler)
     print(f"SWE-Trace review UI: http://{host}:{port}/review", flush=True)
     server.serve_forever()
 
 
-def _make_handler(reports: Path, runs: Path, queue: Path, annotations: Path):
+def _make_handler(
+    reports: Path,
+    runs: Path,
+    queue: Path,
+    annotations: Path,
+    dpo_dataset: Path = DEFAULT_DPO_DATASET,
+):
     class ReviewHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
@@ -141,6 +175,10 @@ def _make_handler(reports: Path, runs: Path, queue: Path, annotations: Path):
                 if parsed.path == "/api/run":
                     run_id = parse_qs(parsed.query).get("run_id", [""])[0]
                     self._send_json(load_run_detail(runs=runs, run_id=run_id))
+                    return
+                if parsed.path == "/api/dpo-dataset":
+                    split = parse_qs(parsed.query).get("split", ["main"])[0]
+                    self._send_json(load_dpo_dataset(dataset=dpo_dataset, split=split))
                     return
                 html_path = _html_path_for_request(reports=reports, request_path=parsed.path)
                 if html_path is not None:
@@ -241,6 +279,7 @@ def main() -> None:
     parser.add_argument("--runs", type=Path, default=DEFAULT_RUNS)
     parser.add_argument("--queue", type=Path, default=DEFAULT_QUEUE)
     parser.add_argument("--annotations", type=Path, default=DEFAULT_ANNOTATIONS)
+    parser.add_argument("--dpo-dataset", type=Path, default=DEFAULT_DPO_DATASET)
     args = parser.parse_args()
     serve(
         host=args.host,
@@ -249,6 +288,7 @@ def main() -> None:
         runs=args.runs,
         queue=args.queue,
         annotations=args.annotations,
+        dpo_dataset=args.dpo_dataset,
     )
 
 

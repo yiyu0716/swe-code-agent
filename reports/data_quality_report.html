@@ -196,6 +196,7 @@
       <a href="progress.html">项目进展</a>
       <a href="project_overview.html">项目全景图</a>
       <a href="annotation_calibration.html">标注校准页</a>
+      <a href="dpo_browser.html">DPO 数据浏览器</a>
       <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
     </nav>
   </header>
@@ -349,8 +350,9 @@
     <section class="section">
       <h2>下一步</h2>
       <ol>
-        <li>生成 filtered DPO JSONL：主集只包含 18 条 <code>close/partial + dpo_usable=true</code>。</li>
-        <li>生成 hard-negative JSONL：单独放 2 条 <code>poor + dpo_usable=true</code>，训练时控制权重。</li>
+        <li>已生成 filtered DPO JSONL：主集 <code>dpo_main.jsonl</code> 包含 18 条 <code>close/partial + dpo_usable=true</code>。</li>
+        <li>已生成 hard-negative JSONL：<code>dpo_hard_negative.jsonl</code> 单独放 2 条 <code>poor + dpo_usable=true</code>，训练时控制权重。</li>
+        <li>打开 <code>dpo_browser.html</code> 抽查 chosen/rejected 是否符合训练预期。</li>
         <li>继续跑更多 SWE-bench Lite tasks，目标先到 100 条真实 annotation，其中至少 30 条 close。</li>
         <li>重点补真实 resolved run，否则 SFT 数据仍然只有 fake sanity，不能开始严肃 SFT。</li>
         <li>把 env_only 单独统计到工程看板，继续压低 Docker/testbed 失败率。</li>

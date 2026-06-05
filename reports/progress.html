@@ -145,6 +145,7 @@
       <a href="progress.html">项目进展</a>
       <a href="annotation_calibration.html">标注校准页</a>
       <a href="data_quality_report.html">数据质量报告</a>
+      <a href="dpo_browser.html">DPO 数据浏览器</a>
       <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
     </nav>
   </header>
@@ -196,7 +197,9 @@
         和 SWE-Trace 的 patch/SFT/DPO 标准。当前 29 条 SWE-bench 人工复核队列已全部写入 annotation，
         另补 1 条 fake resolved baseline 作为成功 sanity sample。人工复核服务 <code>20039</code>
         已支持直接托管静态报告页，可打开 <code>/annotation_calibration.html</code> 和
-        <code>/data_quality_report.html</code>；下一步转向标签质检和第一版数据筛选报告。
+        <code>/data_quality_report.html</code>。当前已导出 v0.1 filtered DPO 数据：
+        <code>dpo_main=18</code>、<code>dpo_hard_negative=2</code>、<code>sft_sanity=1</code>，
+        并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本；下一步转向扩大真实样本和真实 resolved run。
       </p>
     </section>
 
@@ -531,13 +534,21 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>v0.1 DPO 导出与浏览器</h3>
+            <p>新增 <code>swetrace.data_builder.export_filtered_dpo</code>，按 annotation 过滤生成 <code>/data/yiyuldx/swe/outputs/datasets/v0.1</code>：<code>dpo_main.jsonl</code> 18 条、<code>dpo_hard_negative.jsonl</code> 2 条、<code>sft_sanity.jsonl</code> 1 条、<code>excluded.jsonl</code> 9 条，并新增 <code>reports/dpo_browser.html</code> 可视化查看 prompt、chosen、rejected、patch_quality 和 notes。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>基于 <code>reports/data_quality_report.html</code> 的规则导出第一版 filtered DPO JSONL 和 hard-negative JSONL。</li>
+        <li>打开 <code>reports/dpo_browser.html</code> 抽查 v0.1 DPO 主集和 hard-negative，确认 chosen/rejected 质量。</li>
         <li>用 <code>reports/annotation_calibration.html</code> 继续校准新采样本，后续人工复核只需重点看新增 run。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
