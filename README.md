@@ -164,6 +164,18 @@ SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/auto_label_runs
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_queue.sh
 ```
 
+Record a human review annotation without mutating run artifacts:
+
+```bash
+SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/annotate_review.sh \
+  --run-id 20260604T180152Z-pydicom__pydicom-1694-mini-swe-agent-86ca4ad0 \
+  --human-failure PatchError.IncompleteFix \
+  --patch-quality close \
+  --sft-usable false \
+  --dpo-usable true \
+  --notes "Gold patch is tiny; agent patch is close but the run did not resolve."
+```
+
 Current real-run status:
 
 - 24 unique mini-SWE-agent task IDs have been attempted.
@@ -172,6 +184,7 @@ Current real-run status:
 - `/data/yiyuldx/swe/outputs/datasets` currently contains 30 SFT-plan rows, 24 SFT-patch rows, 24 SFT-debug rows, 30 reward logs, and 23 gold-vs-agent DPO pairs.
 - The adapter preserves partial trajectories when the outer command times out.
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
+- Manual annotations are written to `/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl`; the first smoke annotation has been recorded for `pydicom__pydicom-1694`.
 Current broader-batch note: Docker image pulls are now stored on `/data`; the next useful
 step is reviewing labels and patch quality before expanding into larger train/test pools.
 

@@ -98,6 +98,7 @@ python -m swetrace.collect.run_task
 python -m swetrace.collect.run_batch
 python -m swetrace.data_builder.build_from_runs
 python -m swetrace.labeling.auto_label_runs
+python -m swetrace.labeling.annotate_review
 python -m swetrace.collect.recover_mini_runs
 python -m swetrace.collect.enrich_swebench_run_tasks
 ```
@@ -109,6 +110,7 @@ Scripts:
 ./scripts/run_fake_batch.sh
 ./scripts/build_fake_data.sh
 ./scripts/auto_label_runs.sh
+./scripts/annotate_review.sh
 ./scripts/run_mini_smoke.sh
 ./scripts/download_swebench_lite.sh
 ./scripts/recover_mini_runs.sh
@@ -138,6 +140,7 @@ Current generated data is under `/data/yiyuldx/swe`:
 - 24 unique mini-SWE-agent task IDs attempted.
 - 24 agent patch artifacts.
 - 29 manual review queue items.
+- 1 manual annotation smoke row in `/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl`.
 - Dataset rows: SFT plan 30, SFT patch 24, SFT debug 24, reward logs 30, DPO pairs 23.
 - Current SWE-bench Lite dev candidates are exhausted after collecting sqlfluff, marshmallow, pvlib, astroid, pyvista, and pydicom tasks.
 
@@ -268,7 +271,7 @@ http://<server-ip>:20038/
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
 3. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
-4. Add a lightweight review/annotation CLI that records human labels, patch quality, and train/eval inclusion decisions under `/data/yiyuldx/swe/outputs/reports`.
+4. Continue using `scripts/annotate_review.sh` to record human labels, patch quality, and train/eval inclusion decisions under `/data/yiyuldx/swe/outputs/reports`.
 5. Use the reviewed data to write a first data quality report and update filtering rules.
 6. Optionally expand beyond Lite dev after the review loop is useful.
 7. Keep updating `reports/progress.html` and push GitHub.
@@ -312,4 +315,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is reviewing labels and patch quality, then adding a lightweight annotation path so the collected real trajectories become usable training/debug data.
+Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is reviewing more queue items with the annotation CLI, then generating a first data-quality report so the collected real trajectories become usable training/debug data.

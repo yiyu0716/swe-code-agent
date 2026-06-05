@@ -136,7 +136,7 @@
       <div class="card">
         <h3>自动标签</h3>
         <span class="metric">30</span>
-        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 29 条</p>
+        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 29 条，人工 annotation smoke 1 条</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
@@ -167,7 +167,8 @@
         当前已覆盖 24 个 unique mini-SWE-agent task id；25 条 raw mini 轨迹已标准化。
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
         已形成真实采集到训练数据的最小闭环。SWE-bench Lite dev 本地 23 个任务已无剩余未跑项；
-        下一步转向人工复核、标签质检和第一版数据筛选报告。
+        当前已新增非破坏式人工 annotation CLI，review 结果写入
+        <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>，下一步转向标签质检和第一版数据筛选报告。
       </p>
     </section>
 
@@ -454,14 +455,22 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>人工 annotation CLI</h3>
+            <p>新增 <code>scripts/annotate_review.sh</code> 和 <code>swetrace.labeling.annotate_review</code>，可按 <code>run_id</code> upsert 人工 failure、patch quality、SFT/DPO 可用性与 notes；已对 <code>pydicom__pydicom-1694</code> 写入 1 条 smoke annotation。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>人工复核 <code>/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl</code>，校正自动标签并沉淀可训练/需剔除标准。</li>
-        <li>补一个轻量 review/annotation CLI，输出人工确认标签、patch 质量和训练样本取舍。</li>
+        <li>继续人工复核 <code>/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl</code>，把结果写入 <code>manual_annotations.jsonl</code>。</li>
+        <li>基于 annotation 输出第一版数据质量报告，统计 close/partial/poor patch 和 SFT/DPO inclusion。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
     </section>

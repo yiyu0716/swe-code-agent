@@ -227,3 +227,144 @@ def test_review_queue_exports_non_resolved_runs(tmp_path) -> None:
     assert rows[0]["primary_failure"] == "PatchError.IncompleteFix"
     assert rows[0]["needs_human_review"] is True
     assert rows[0]["patch_preview"].startswith("diff --git")
+
+
+def test_annotate_review_writes_human_annotation(tmp_path) -> None:
+    queue = tmp_path / "manual_review_queue.jsonl"
+    queue.write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "task_id": "task-1",
+                "status": "failed",
+                "primary_failure": "PatchError.IncompleteFix",
+                "severity": 3,
+                "is_data_usable_for_sft": False,
+                "is_data_usable_for_dpo": True,
+                "patch_preview": "diff --git a/file.py b/file.py\n",
+                "test_log_preview": "1 failed\n",
+            }
+        )
+        + "\n"
+    )
+    out = tmp_path / "manual_annotations.jsonl"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.labeling.annotate_review",
+            "--queue",
+            str(queue),
+            "--out",
+            str(out),
+            "--run-id",
+            "run-1",
+            "--human-failure",
+            "PatchError.IncompleteFix",
+            "--patch-quality",
+            "partial",
+            "--sft-usable",
+            "false",
+            "--dpo-usable",
+            "true",
+            "--notes",
+            "Patch is close but tests fail.",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload == {"annotations": 1, "updated": "run-1", "out": str(out)}
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert rows == [
+        {
+            "run_id": "run-1",
+            "task_id": "task-1",
+            "auto_primary_failure": "PatchError.IncompleteFix",
+            "auto_severity": 3,
+            "human_failure": "PatchError.IncompleteFix",
+            "patch_quality": "partial",
+            "sft_usable": False,
+            "dpo_usable": True,
+            "notes": "Patch is close but tests fail.",
+            "reviewer": "manual",
+        }
+    ]
+
+
+def test_annotate_review_updates_existing_annotation(tmp_path) -> None:
+    queue = tmp_path / "manual_review_queue.jsonl"
+    queue.write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "task_id": "task-1",
+                "status": "failed",
+                "primary_failure": "PatchError.IncompleteFix",
+                "severity": 3,
+                "is_data_usable_for_sft": False,
+                "is_data_usable_for_dpo": True,
+            }
+        )
+        + "\n"
+    )
+    out = tmp_path / "manual_annotations.jsonl"
+    out.write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "task_id": "task-1",
+                "auto_primary_failure": "PatchError.IncompleteFix",
+                "auto_severity": 3,
+                "human_failure": "PatchError.IncompleteFix",
+                "patch_quality": "poor",
+                "sft_usable": False,
+                "dpo_usable": False,
+                "notes": "old note",
+                "reviewer": "manual",
+            }
+        )
+        + "\n"
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.labeling.annotate_review",
+            "--queue",
+            str(queue),
+            "--out",
+            str(out),
+            "--run-id",
+            "run-1",
+            "--human-failure",
+            "PatchError.IncompleteFix",
+            "--patch-quality",
+            "close",
+            "--sft-usable",
+            "false",
+            "--dpo-usable",
+            "true",
+            "--notes",
+            "updated note",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload == {"annotations": 1, "updated": "run-1", "out": str(out)}
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert len(rows) == 1
+    assert rows[0]["patch_quality"] == "close"
+    assert rows[0]["dpo_usable"] is True
+    assert rows[0]["notes"] == "updated note"
