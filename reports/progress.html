@@ -156,9 +156,9 @@
         <p>29 个 mini-SWE-agent reports + 1 个 fake baseline；25 条 raw mini 轨迹已标准化</p>
       </div>
       <div class="card">
-        <h3>自动标签</h3>
+        <h3>人工标注</h3>
         <span class="metric">30</span>
-        <p>rule-based labels 已覆盖当前标准化 runs；人工复核队列 29 条，人工 annotation smoke 2 条</p>
+        <p>29 条 SWE-bench review queue 已全覆盖 + 1 条 fake resolved baseline；close 10 / partial 12 / poor 2 / empty 1 / env_only 5</p>
       </div>
       <div class="card">
         <h3>SFT 样本</h3>
@@ -192,7 +192,8 @@
         当前已新增非破坏式人工 annotation CLI 和本地 Web 复核工作台，review 结果写入
         <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>；当前新增
         <code>reports/annotation_calibration.html</code> 标注校准页，用于对照 OpenAI SWE-bench Verified
-        和 SWE-Trace 的 patch/SFT/DPO 标准。下一步转向标签质检和第一版数据筛选报告。
+        和 SWE-Trace 的 patch/SFT/DPO 标准。当前 29 条 SWE-bench 人工复核队列已全部写入 annotation，
+        另补 1 条 fake resolved baseline 作为成功 sanity sample；下一步转向标签质检和第一版数据筛选报告。
       </p>
     </section>
 
@@ -503,15 +504,22 @@
           </div>
           <span>2026-06-05</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>30 条 annotation 批量标注</h3>
+            <p>按人工确认策略写入 <code>/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl</code>：29 条真实 SWE-bench review queue 全覆盖，另含 1 条 fake resolved baseline；分布为 <code>close=10</code>、<code>partial=12</code>、<code>poor=2</code>、<code>empty=1</code>、<code>env_only=5</code>，SFT 可用 1 条，DPO 可用 20 条。</p>
+          </div>
+          <span>2026-06-05</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>启动 <code>scripts/serve_review_ui.sh</code>，继续在网页复核 <code>manual_review_queue.jsonl</code>，把结果写入 <code>manual_annotations.jsonl</code>。</li>
-        <li>复核前先打开 <code>reports/annotation_calibration.html</code> 对齐标注标准，尤其区分 close、partial、poor、empty、env_only。</li>
-        <li>基于 annotation 输出第一版数据质量报告，统计 close/partial/poor patch 和 SFT/DPO inclusion。</li>
+        <li>基于当前 30 条 annotation 输出第一版数据质量报告，统计 close/partial/poor patch 和 SFT/DPO inclusion。</li>
+        <li>用 <code>reports/annotation_calibration.html</code> 继续校准新采样本，后续人工复核只需重点看新增 run。</li>
         <li>继续积累成功/失败同题 pairs；当前 gold-vs-agent DPO 已可用于第一版偏好数据质检。</li>
       </ul>
     </section>
