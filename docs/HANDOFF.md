@@ -1,6 +1,6 @@
 # SWE-Trace Handoff
 
-Last updated: 2026-06-05 02:14 CST
+Last updated: 2026-06-06 16:40 CST
 
 ## Current Machine Status
 
@@ -29,7 +29,7 @@ Current Python environment:
 Current verified status:
 
 ```text
-30 passed
+63 passed
 ```
 
 Docker is installed and reachable. In this Codex process, wrap Docker commands with `sg docker -c`
@@ -102,6 +102,7 @@ python -m swetrace.labeling.annotate_review
 python -m swetrace.labeling.review_server
 python -m swetrace.collect.recover_mini_runs
 python -m swetrace.collect.enrich_swebench_run_tasks
+python -m swetrace.collect.audit_swebench_closure
 ```
 
 Scripts:
@@ -136,17 +137,34 @@ Failure taxonomy and rule-based auto-labeling exist, including environment failu
 
 Current generated data is under `/data/yiyuldx/swe`:
 
-- 30 normalized reports in `/data/yiyuldx/swe/runs`.
-- 29 mini-SWE-agent reports plus 1 fake baseline.
-- 25 raw mini-SWE-agent `.traj.json` files normalized into SWE-Trace artifacts.
-- 24 unique mini-SWE-agent task IDs attempted.
-- 24 agent patch artifacts.
-- 29 manual review queue items.
-- 2 manual annotation smoke rows in `/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl`.
-- Dataset rows: SFT plan 30, SFT patch 24, SFT debug 24, reward logs 30, DPO pairs 23.
-- Current SWE-bench Lite dev candidates are exhausted after collecting sqlfluff, marshmallow, pvlib, astroid, pyvista, and pydicom tasks.
+- 99 non-fake runs have `official_eval.json`.
+- 94 runs completed official SWE-bench evaluation.
+- 40 runs are official resolved and enter v0.2 SFT.
+- 54 official unresolved runs enter v0.2 DPO/debug.
+- 5 old `psf/requests` runs are still pending and excluded from training labels.
+- v0.2 dataset rows: SFT plan 40, SFT patch 40, DPO main 54, debug cases 54, reward logs 94, excluded 23.
+- `train_ready=false` because the current gate is `SFT >= 30` and `DPO >= 60`; only 6 more DPO rows are needed.
+- Local Docker has 90 SWE-bench official `latest` images with corresponding Mini run and official eval records.
+- Current closure audit is clean: `missing_mini=0`, `missing_official=0`, `nonempty_patch_missing_official=0`.
 
 These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
+
+Hard data rule:
+
+```text
+Every downloaded SWE-bench task/image must be closed by Mini collection and official
+SWE-bench evaluation before it is counted as usable training data.
+```
+
+Use this audit after every expansion batch:
+
+```bash
+sg docker -c 'cd /home/yiyuldx/swe && /home/yiyuldx/birdNet/.venv/bin/python -m swetrace.collect.audit_swebench_closure --runs /data/yiyuldx/swe/runs'
+```
+
+If the audit reports `tasks_missing_mini_run`, `tasks_without_official_eval`, or
+`nonempty_patch_missing_official`, finish Mini collection and official evaluation for those
+instances before selecting more tasks.
 
 ## mini-SWE-agent Status
 
@@ -209,8 +227,9 @@ The cache directory is ignored by git and is not required in the source package.
 Docker works and its data root is on `/data/yiyuldx/docker`. The root filesystem remains
 near full because the old `/var/lib/docker` copy has not been removed yet, but new Docker
 layers now land on `/data`. The local SWE-bench Lite dev split has no remaining unattempted
-tasks when skipping existing runs. The next limiter is data quality: review labels, patch
-quality, and train/eval inclusion decisions before expanding to larger splits.
+tasks when skipping existing runs. The current limiter is DPO volume: v0.2 already has enough
+official resolved SFT samples, but needs 6 more official unresolved + gold-patch DPO rows to
+cross the initial training threshold.
 
 Docker preflight:
 
@@ -272,11 +291,10 @@ http://<server-ip>:20038/
 
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
-3. Manually review `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
-4. Continue using `scripts/serve_review_ui.sh` or `scripts/annotate_review.sh` to record human labels, patch quality, and train/eval inclusion decisions under `/data/yiyuldx/swe/outputs/reports`.
-5. Use the reviewed data to write a first data quality report and update filtering rules.
-6. Optionally expand beyond Lite dev after the review loop is useful.
-7. Keep updating `reports/progress.html` and push GitHub.
+3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json`, rebuild v0.2, then run `swetrace.collect.audit_swebench_closure`.
+4. Continue SWE-bench Lite test split expansion until v0.2 has at least `DPO main=60`.
+5. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
+6. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.
 
 ## Git and Commit Requirements
 
@@ -317,4 +335,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is reviewing more queue items with the annotation CLI, then generating a first data-quality report so the collected real trajectories become usable training/debug data.
+Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is adding at least 6 more official unresolved + gold-patch DPO rows while enforcing the download -> Mini -> official eval -> v0.2 rebuild closure gate.

@@ -166,6 +166,90 @@ def test_prepare_swebench_images_dry_run_writes_manifest(tmp_path) -> None:
     ]
 
 
+def test_audit_swebench_closure_reports_downloaded_tasks_without_mini_or_official_eval(tmp_path) -> None:
+    images = tmp_path / "images.txt"
+    images.write_text(
+        "\n".join(
+            [
+                "swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest 1.2GB",
+                "swebench/sweb.eval.x86_64.pydicom_1776_pydicom-901:latest 2.4GB",
+                "swebench/sweb.eval.x86_64.astropy_1776_astropy-12907:pip-proxy 2.7GB",
+            ]
+        )
+        + "\n"
+    )
+    runs = tmp_path / "runs"
+    _write_minimal_run(
+        runs,
+        run_id="run-sqlfluff",
+        task_id="sqlfluff__sqlfluff-1625",
+        patch="diff --git a/file.py b/file.py\n+fix\n",
+        official_eval={"completed": True, "resolved": False},
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.collect.audit_swebench_closure",
+            "--runs",
+            str(runs),
+            "--images-file",
+            str(images),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 1
+    payload = json.loads(completed.stdout)
+    assert payload["latest_images"] == 2
+    assert payload["tasks_with_mini_run"] == 1
+    assert payload["tasks_missing_mini_run"] == 1
+    assert payload["tasks_without_official_eval"] == 1
+    assert payload["closed_tasks"] == 1
+    assert payload["missing_mini_run"] == ["pydicom__pydicom-901"]
+    assert payload["without_official_eval"] == ["pydicom__pydicom-901"]
+
+
+def test_audit_swebench_closure_accepts_fully_closed_downloaded_tasks(tmp_path) -> None:
+    images = tmp_path / "images.txt"
+    images.write_text("docker.io/swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1625:latest\n")
+    runs = tmp_path / "runs"
+    _write_minimal_run(
+        runs,
+        run_id="run-sqlfluff",
+        task_id="sqlfluff__sqlfluff-1625",
+        patch="diff --git a/file.py b/file.py\n+fix\n",
+        official_eval={"completed": True, "resolved": True},
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "swetrace.collect.audit_swebench_closure",
+            "--runs",
+            str(runs),
+            "--images-file",
+            str(images),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["closed_tasks"] == 1
+    assert payload["tasks_missing_mini_run"] == 0
+    assert payload["tasks_without_official_eval"] == 0
+    assert payload["nonempty_patch_missing_official"] == 0
+
+
 def test_review_queue_exports_non_resolved_runs(tmp_path) -> None:
     run_dir = tmp_path / "runs" / "run-1"
     run_dir.mkdir(parents=True)
@@ -227,6 +311,42 @@ def test_review_queue_exports_non_resolved_runs(tmp_path) -> None:
     assert rows[0]["primary_failure"] == "PatchError.IncompleteFix"
     assert rows[0]["needs_human_review"] is True
     assert rows[0]["patch_preview"].startswith("diff --git")
+
+
+def _write_minimal_run(
+    runs: Path,
+    run_id: str,
+    task_id: str,
+    patch: str,
+    official_eval: dict | None = None,
+) -> None:
+    run_dir = runs / run_id
+    run_dir.mkdir(parents=True)
+    (run_dir / "report.json").write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "task_id": task_id,
+                "agent": "mini-swe-agent",
+                "status": "failed",
+                "patch_apply": True,
+                "tests_passed": False,
+                "resolved": False,
+            }
+        )
+    )
+    (run_dir / "patch.diff").write_text(patch)
+    if official_eval is not None:
+        (run_dir / "official_eval.json").write_text(
+            json.dumps(
+                {
+                    "source": "swebench_official",
+                    "run_id": run_id,
+                    "task_id": task_id,
+                    **official_eval,
+                }
+            )
+        )
 
 
 def test_annotate_review_writes_human_annotation(tmp_path) -> None:
