@@ -137,17 +137,17 @@ Failure taxonomy and rule-based auto-labeling exist, including environment failu
 
 Current generated data is under `/data/yiyuldx/swe`:
 
-- 99 non-fake runs have `official_eval.json`.
-- 94 runs completed official SWE-bench evaluation.
-- 40 runs are official resolved and enter v0.2 SFT.
-- 54 official unresolved runs enter v0.2 DPO/debug.
+- 108 non-fake runs have `official_eval.json`.
+- 103 runs completed official SWE-bench evaluation.
+- 42 runs are official resolved and enter v0.2 SFT.
+- 61 official unresolved runs enter v0.2 DPO/debug.
 - 5 old `psf/requests` runs are still pending and excluded from training labels.
-- 94 completed official labels have been backfilled into `runs/*/report.json` main fields.
+- 103 completed official labels have been backfilled into `runs/*/report.json` main fields.
 - The old mini-SWE-agent labels are preserved under `legacy_*` fields.
 - Current report/official audit is clean: `report_official_mismatch=0`.
-- v0.2 dataset rows: SFT plan 40, SFT patch 40, DPO main 54, debug cases 54, reward logs 94, excluded 23.
-- `train_ready=false` because the current gate is `SFT >= 30` and `DPO >= 60`; only 6 more DPO rows are needed.
-- Local Docker has 90 SWE-bench official `latest` images with corresponding Mini run and official eval records.
+- v0.2 dataset rows: SFT plan 42, SFT patch 42, DPO main 61, debug cases 61, reward logs 103, excluded 25.
+- `train_ready=true` because the current gate is `SFT >= 30` and `DPO >= 60`.
+- Local Docker has 94 SWE-bench official `latest` images with corresponding Mini run and official eval records.
 - Current closure audit is clean: `missing_mini=0`, `missing_official=0`, `nonempty_patch_missing_official=0`.
 
 These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
@@ -238,9 +238,10 @@ The cache directory is ignored by git and is not required in the source package.
 Docker works and its data root is on `/data/yiyuldx/docker`. The root filesystem remains
 near full because the old `/var/lib/docker` copy has not been removed yet, but new Docker
 layers now land on `/data`. The local SWE-bench Lite dev split has no remaining unattempted
-tasks when skipping existing runs. The current limiter is DPO volume: v0.2 already has enough
-official resolved SFT samples, but needs 6 more official unresolved + gold-patch DPO rows to
-cross the initial training threshold.
+tasks when skipping existing runs. The current v0.2 data has crossed the initial training
+threshold with enough official resolved SFT samples and official unresolved + gold-patch DPO
+rows. The current limiter is no longer raw DPO count; it is freezing a reproducible training
+snapshot and running a small SFT/DPO smoke before training.
 
 Docker preflight:
 
@@ -303,9 +304,10 @@ http://<server-ip>:20038/
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
 3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json` with `swetrace.eval.swebench_official import-statuses`, rebuild v0.2, then run `swetrace.collect.audit_swebench_closure`.
-4. Continue SWE-bench Lite test split expansion until v0.2 has at least `DPO main=60`.
-5. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
-6. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.
+4. Freeze the current v0.2 dataset snapshot for training, then run data-format smoke checks and a small SFT/DPO training dry run.
+5. Continue SWE-bench Lite test split expansion only in closed batches: Mini collection, official evaluation, import/backfill, v0.2 rebuild, and closure audit.
+6. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
+7. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.
 
 ## Git and Commit Requirements
 
@@ -346,4 +348,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The next valuable milestone is adding at least 6 more official unresolved + gold-patch DPO rows while enforcing the download -> Mini -> official eval -> v0.2 rebuild closure gate.
+Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=42` and `DPO main=61`. The next valuable milestone is freezing a reproducible training snapshot and running a small SFT/DPO smoke, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.

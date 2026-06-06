@@ -45,7 +45,7 @@ def test_progress_page_links_to_project_overview() -> None:
     assert "dpo_browser.html" in html
     assert "DPO 数据浏览器" in html
     assert "官方 SWE-bench 评测" in html
-    assert "40 个官方 resolved" in html
+    assert "42 个官方 resolved" in html
     assert "SFT Patch" in html
     assert "DPO Main" in html
     assert "下载闭环门禁" in html
@@ -126,12 +126,13 @@ def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
         "数据质量报告",
         "manual_annotations.jsonl",
         "官方 SWE-bench 评测",
-        "94 completed",
-        "40 official resolved",
+        "103 completed",
+        "42 official resolved",
         "5 个 requests run",
-        "SFT patch 40",
-        "DPO main 54",
-        "reward logs 94",
+        "SFT patch 42",
+        "DPO main 61",
+        "reward logs 103",
+        "train_ready=true",
         "下载闭环审计",
         "missing_mini=0",
         "missing_official=0",
