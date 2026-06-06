@@ -61,6 +61,8 @@ def test_export_official_v02_uses_only_completed_official_labels(tmp_path) -> No
 
     assert sft_rows[0]["output"] == "resolved patch"
     assert sft_rows[0]["meta"]["official_resolved"] is True
+    assert sft_rows[0]["meta"]["legacy_status"] == "failed"
+    assert sft_rows[0]["meta"]["legacy_resolved"] is False
     assert dpo_rows[0]["chosen"] == "gold patch for task-unresolved"
     assert dpo_rows[0]["rejected"] == "unresolved patch"
     assert dpo_rows[0]["meta"]["official_resolved"] is False
@@ -185,11 +187,16 @@ def _write_run(
                 "run_id": run_id,
                 "task_id": task_id,
                 "agent": "mini-swe-agent",
-                "status": "failed",
+                "status": "resolved" if official and official["resolved"] else "failed",
                 "patch_apply": True,
-                "tests_passed": False,
-                "resolved": False,
+                "tests_passed": bool(official and official["resolved"]),
+                "resolved": bool(official and official["resolved"]),
                 "num_tool_calls": 3,
+                "label_source": "swebench_official" if official else "mini_swe_agent",
+                "legacy_status": "failed" if official else None,
+                "legacy_patch_apply": True if official else None,
+                "legacy_tests_passed": False if official else None,
+                "legacy_resolved": False if official else None,
             }
         )
     )

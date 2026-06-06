@@ -1,6 +1,6 @@
 # SWE-Trace Handoff
 
-Last updated: 2026-06-06 16:40 CST
+Last updated: 2026-06-06 19:03 CST
 
 ## Current Machine Status
 
@@ -29,7 +29,7 @@ Current Python environment:
 Current verified status:
 
 ```text
-63 passed
+65 passed
 ```
 
 Docker is installed and reachable. In this Codex process, wrap Docker commands with `sg docker -c`
@@ -142,6 +142,9 @@ Current generated data is under `/data/yiyuldx/swe`:
 - 40 runs are official resolved and enter v0.2 SFT.
 - 54 official unresolved runs enter v0.2 DPO/debug.
 - 5 old `psf/requests` runs are still pending and excluded from training labels.
+- 94 completed official labels have been backfilled into `runs/*/report.json` main fields.
+- The old mini-SWE-agent labels are preserved under `legacy_*` fields.
+- Current report/official audit is clean: `report_official_mismatch=0`.
 - v0.2 dataset rows: SFT plan 40, SFT patch 40, DPO main 54, debug cases 54, reward logs 94, excluded 23.
 - `train_ready=false` because the current gate is `SFT >= 30` and `DPO >= 60`; only 6 more DPO rows are needed.
 - Local Docker has 90 SWE-bench official `latest` images with corresponding Mini run and official eval records.
@@ -154,6 +157,14 @@ Hard data rule:
 ```text
 Every downloaded SWE-bench task/image must be closed by Mini collection and official
 SWE-bench evaluation before it is counted as usable training data.
+```
+
+Official status import rule:
+
+```text
+`python -m swetrace.eval.swebench_official import-statuses` writes `official_eval.json`
+and automatically backfills completed official labels into `report.json`. Do not rely on
+legacy mini labels for training success/failure decisions.
 ```
 
 Use this audit after every expansion batch:
@@ -291,7 +302,7 @@ http://<server-ip>:20038/
 
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
-3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json`, rebuild v0.2, then run `swetrace.collect.audit_swebench_closure`.
+3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json` with `swetrace.eval.swebench_official import-statuses`, rebuild v0.2, then run `swetrace.collect.audit_swebench_closure`.
 4. Continue SWE-bench Lite test split expansion until v0.2 has at least `DPO main=60`.
 5. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
 6. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.

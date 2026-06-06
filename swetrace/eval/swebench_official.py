@@ -297,7 +297,77 @@ def import_run_statuses(statuses: Path, runs: Path) -> dict[str, int]:
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
         )
         written += 1
+    backfill_reports_from_official_eval(runs)
     return {"rows": len(rows), "written": written, "missing_runs": missing}
+
+
+def backfill_reports_from_official_eval(runs: Path) -> dict[str, int]:
+    summary = {
+        "runs": 0,
+        "updated": 0,
+        "skipped_missing_report": 0,
+        "skipped_missing_official": 0,
+        "skipped_pending_official": 0,
+        "mismatched_before": 0,
+    }
+    for run_dir in sorted(path for path in runs.iterdir() if path.is_dir()):
+        summary["runs"] += 1
+        report_path = run_dir / "report.json"
+        official_path = run_dir / "official_eval.json"
+        if not report_path.exists():
+            summary["skipped_missing_report"] += 1
+            continue
+        if not official_path.exists():
+            summary["skipped_missing_official"] += 1
+            continue
+        report = json.loads(report_path.read_text())
+        official = json.loads(official_path.read_text())
+        if not bool(official.get("completed")):
+            summary["skipped_pending_official"] += 1
+            continue
+
+        official_patch_apply = bool(official.get("patch_successfully_applied"))
+        official_tests_passed = bool(official.get("tests_passed"))
+        official_resolved = bool(official.get("resolved"))
+        official_status = "resolved" if official_resolved else "failed"
+        if (
+            report.get("status") != official_status
+            or bool(report.get("patch_apply")) != official_patch_apply
+            or bool(report.get("tests_passed")) != official_tests_passed
+            or bool(report.get("resolved")) != official_resolved
+        ):
+            summary["mismatched_before"] += 1
+
+        legacy_status = report.get("legacy_status", report.get("status"))
+        legacy_patch_apply = report.get("legacy_patch_apply", report.get("patch_apply"))
+        legacy_tests_passed = report.get("legacy_tests_passed", report.get("tests_passed"))
+        legacy_resolved = report.get("legacy_resolved", report.get("resolved"))
+
+        report.update(
+            {
+                "status": official_status,
+                "patch_apply": official_patch_apply,
+                "tests_passed": official_tests_passed,
+                "resolved": official_resolved,
+                "label_source": "swebench_official",
+                "legacy_status": legacy_status,
+                "legacy_patch_apply": legacy_patch_apply,
+                "legacy_tests_passed": legacy_tests_passed,
+                "legacy_resolved": legacy_resolved,
+                "official_run_id": official.get("official_run_id"),
+                "official_completed": bool(official.get("completed")),
+                "official_patch_exists": bool(official.get("patch_exists")),
+                "official_patch_successfully_applied": official_patch_apply,
+                "official_fail_to_pass_success": int(official.get("fail_to_pass_success") or 0),
+                "official_fail_to_pass_failure": int(official.get("fail_to_pass_failure") or 0),
+                "official_pass_to_pass_success": int(official.get("pass_to_pass_success") or 0),
+                "official_pass_to_pass_failure": int(official.get("pass_to_pass_failure") or 0),
+                "official_report_path": official.get("report_path"),
+            }
+        )
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+        summary["updated"] += 1
+    return summary
 
 
 @app.command("write-dataset-json")
@@ -430,6 +500,13 @@ def import_statuses_command(
     runs: Path = typer.Option(..., exists=True, file_okay=False, help="SWE-Trace runs root."),
 ) -> None:
     typer.echo(json.dumps(import_run_statuses(statuses, runs), ensure_ascii=False))
+
+
+@app.command("backfill-reports")
+def backfill_reports_command(
+    runs: Path = typer.Option(..., exists=True, file_okay=False, help="SWE-Trace runs root."),
+) -> None:
+    typer.echo(json.dumps(backfill_reports_from_official_eval(runs), ensure_ascii=False))
 
 
 def _jsonable(row: dict[str, Any]) -> dict[str, Any]:

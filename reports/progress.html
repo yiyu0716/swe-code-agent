@@ -155,7 +155,7 @@
       <div class="card">
         <h3>官方状态</h3>
         <span class="metric">99</span>
-        <p>99 个 run 写入 <code>official_eval.json</code>；94 个已完成官方实例级评测</p>
+        <p>99 个 run 写入 <code>official_eval.json</code>；94 个 completed 已回填 <code>report.json</code></p>
       </div>
       <div class="card">
         <h3>官方 Resolved</h3>
@@ -190,7 +190,9 @@
         <code>--yolo</code>、timeout、正确 SWE-bench instance metadata、容器内代理与清华 PyPI 源。
         当前已覆盖 90 个本地 SWE-bench official latest 镜像对应任务；99 个 run 写入
         <code>official_eval.json</code>，其中 94 个完成官方实例级评测、40 个 official resolved、
-        54 个进入 v0.2 DPO/debug。
+        54 个进入 v0.2 DPO/debug。官方标签已回填到 94 个 completed run 的
+        <code>report.json</code> 主字段，并保留原 mini 标签到 <code>legacy_*</code> 字段；
+        当前审计 <code>report_official_mismatch=0</code>。
         orphan raw 轨迹恢复、SWE-bench metadata 回填、SFT/debug/reward/DPO 构建和人工复核队列
         已形成真实采集到训练数据的最小闭环。SWE-bench Lite dev 本地 23 个任务已无剩余未跑项；
         当前已开始扩展 SWE-bench Lite test split，并新增非破坏式人工 annotation CLI 和本地 Web 复核工作台，review 结果写入
@@ -204,7 +206,9 @@
         <code>excluded=11</code>，并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本。随后已接入官方 SWE-bench 评测，
         并修复 <code>scripts/run_official_eval.sh</code>：每次评测会按 predictions 自动过滤 dataset，
         避免官方 harness 在汇总阶段访问无关仓库 requirements 导致网络失败。旧 <code>report.json</code>
-        中由 <code>action was not executed</code> 派生的失败标签不再作为训练标签。当前新增
+        中由 <code>action was not executed</code> 派生的失败标签不再作为训练标签；
+        <code>import-statuses</code> 现在会自动执行官方回填，防止后续扩容批次再次出现
+        report 与 official_eval 脱节。当前新增
         <code>swetrace.collect.audit_swebench_closure</code> 闭环审计：每个已下载 SWE-bench official
         latest 镜像都必须有 Mini 采集和官方评测，当前审计为 <code>missing_mini=0</code>、
         <code>missing_official=0</code>。当前 official-aware v0.2 为 <code>SFT patch=40</code>、
@@ -632,6 +636,14 @@
           </div>
           <span>2026-06-06</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>官方标签回填修复</h3>
+            <p>核对 Opus 指出的数据脱节问题：v0.2 已是 official-aware，但旧 <code>report.json</code> 主标签确实曾未回填。现已新增 <code>backfill-reports</code>，并让 <code>import-statuses</code> 导入官方结果后自动回填；真实数据审计为 <code>label_source_official=94</code>、<code>legacy_fields=94</code>、<code>report_official_mismatch=0</code>。唯一未评测非空 patch 是 <code>fake-python-bug-001</code> sanity baseline，不属于 SWE-bench 漏评。</p>
+          </div>
+          <span>2026-06-06</span>
+        </div>
       </div>
     </section>
 
@@ -639,7 +651,7 @@
       <h2>下一步</h2>
       <ul>
         <li>训练启动门槛仍未达到：当前 <code>SFT=40/30</code>、<code>DPO=54/60</code>，优先补 6 条官方 unresolved + gold patch DPO 样本。</li>
-        <li>继续从 SWE-bench Lite test split 小批扩容；每批先预拉镜像、跑 Mini、再 filtered official eval、导入 <code>official_eval.json</code>、重建 v0.2、最后跑下载闭环审计。</li>
+        <li>继续从 SWE-bench Lite test split 小批扩容；每批先预拉镜像、跑 Mini、再 filtered official eval、导入 <code>official_eval.json</code>，导入会自动回填 <code>report.json</code>，然后重建 v0.2、最后跑下载闭环审计。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
       </ul>
     </section>

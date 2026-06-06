@@ -7,6 +7,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from swetrace.eval.swebench_official import (
+    backfill_reports_from_official_eval,
     build_prediction_shards,
     filter_dataset_for_predictions,
     import_run_statuses,
@@ -239,6 +240,89 @@ def test_import_run_statuses_writes_official_eval_files(tmp_path) -> None:
     assert payload["source"] == "swebench_official"
     assert payload["resolved"] is True
     assert payload["tests_passed"] is True
+
+
+def test_import_run_statuses_backfills_report_labels(tmp_path) -> None:
+    runs = tmp_path / "runs"
+    _write_run(runs, "run-a", "task-1", "patch")
+    statuses = tmp_path / "statuses.jsonl"
+    statuses.write_text(
+        json.dumps(
+            {
+                "run_id": "run-a",
+                "task_id": "task-1",
+                "official_run_id": "official-1",
+                "completed": True,
+                "patch_exists": True,
+                "patch_successfully_applied": True,
+                "resolved": True,
+                "fail_to_pass_success": 1,
+                "fail_to_pass_failure": 0,
+                "pass_to_pass_success": 2,
+                "pass_to_pass_failure": 0,
+                "report_path": "/tmp/report.json",
+            }
+        )
+        + "\n"
+    )
+
+    import_run_statuses(statuses, runs)
+
+    report = json.loads((runs / "run-a" / "report.json").read_text())
+    assert report["label_source"] == "swebench_official"
+    assert report["status"] == "resolved"
+    assert report["tests_passed"] is True
+    assert report["resolved"] is True
+    assert report["legacy_status"] == "failed"
+    assert report["legacy_tests_passed"] is False
+    assert report["legacy_resolved"] is False
+
+
+def test_backfill_reports_from_official_eval_updates_legacy_mini_labels(tmp_path) -> None:
+    runs = tmp_path / "runs"
+    _write_run(runs, "run-a", "task-1", "patch")
+    (runs / "run-a" / "official_eval.json").write_text(
+        json.dumps(
+            {
+                "source": "swebench_official",
+                "run_id": "run-a",
+                "task_id": "task-1",
+                "official_run_id": "official-1",
+                "completed": True,
+                "patch_exists": True,
+                "patch_successfully_applied": True,
+                "tests_passed": True,
+                "resolved": True,
+                "fail_to_pass_success": 1,
+                "fail_to_pass_failure": 0,
+                "pass_to_pass_success": 2,
+                "pass_to_pass_failure": 0,
+                "report_path": "/tmp/report.json",
+            }
+        )
+        + "\n"
+    )
+
+    summary = backfill_reports_from_official_eval(runs)
+
+    assert summary == {
+        "runs": 1,
+        "updated": 1,
+        "skipped_missing_report": 0,
+        "skipped_missing_official": 0,
+        "skipped_pending_official": 0,
+        "mismatched_before": 1,
+    }
+    report = json.loads((runs / "run-a" / "report.json").read_text())
+    assert report["status"] == "resolved"
+    assert report["tests_passed"] is True
+    assert report["resolved"] is True
+    assert report["patch_apply"] is True
+    assert report["legacy_status"] == "failed"
+    assert report["legacy_tests_passed"] is False
+    assert report["legacy_resolved"] is False
+    assert report["label_source"] == "swebench_official"
+    assert report["official_run_id"] == "official-1"
 
 
 def test_official_image_for_instance_supports_custom_tag_and_proxy_dockerfile() -> None:

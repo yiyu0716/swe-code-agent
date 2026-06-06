@@ -222,9 +222,13 @@ def _meta(
         "repo": task.repo,
         "source": task.source,
         "run_dir": str(run_dir),
-        "legacy_status": report.status,
-        "legacy_resolved": report.resolved,
-        "legacy_tests_passed": report.tests_passed,
+        "legacy_status": report.legacy_status or report.status,
+        "legacy_resolved": report.legacy_resolved if report.legacy_resolved is not None else report.resolved,
+        "legacy_tests_passed": (
+            report.legacy_tests_passed
+            if report.legacy_tests_passed is not None
+            else report.tests_passed
+        ),
         "official_completed": official_completed,
         "official_resolved": official_resolved,
         "official_patch_successfully_applied": official_patch_applied,
