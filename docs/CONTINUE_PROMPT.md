@@ -28,8 +28,10 @@
 - 人工 review annotation CLI：`annotate_review.sh`
 - 人工 review Web UI：`serve_review_ui.sh`，默认 <http://127.0.0.1:20039/review>
 - gold-patch vs agent-patch DPO pair 构建
-- 当前 `/data/yiyuldx/swe/outputs/datasets` 已有 SFT plan 30、patch 24、debug 24、reward 30、DPO pairs 23
-- 当前 SWE-bench Lite dev 本地任务已跑完；下一批优先继续人工复核、标签质检和数据质量报告
+- official-aware v0.2 数据构建脚本：`build_official_v02.sh`
+- 当前 `/data/yiyuldx/swe/outputs/datasets/v0.2` 已有 SFT plan 42、patch 42、DPO main 61、debug cases 61、reward logs 103，`train_ready=true`
+- 旧 root JSONL 已归档到 `/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605`；do not train on those root JSONL files 或 v0.1 filtered samples
+- 当前 SWE-bench Lite dev 本地任务已跑完；下一批优先冻结 v0.2 训练快照、跑数据格式 smoke 和小规模 SFT/DPO dry run
 
 当前主要阻塞：
 
@@ -46,9 +48,9 @@
 5. 然后运行：
    `SWETRACE_MINI_SUBSET=/data/yiyuldx/swe/cache/swebench_lite SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 ./scripts/run_mini_smoke.sh`
 6. 如果生成真实 `.traj.json`，检查 `trajectory.jsonl`、`patch.diff`、`test.log`、`report.json`，必要时修正 `swetrace/adapters/mini_swe_agent.py` 的 parser 并加测试。
-7. 先检查 task selector 是否仍返回 0 个 dev candidates；若是，转入人工复核与数据质检。
+7. 先检查 task selector 是否仍返回 0 个 dev candidates；若是，转入 v0.2 训练快照、人工复核与数据质检。
 8. 使用 `scripts/serve_review_ui.sh` 打开网页标注，或使用 `scripts/annotate_review.sh` 记录人工标签、patch 质量和 train/eval inclusion。
-9. 检查 `/data/yiyuldx/swe/outputs/datasets/dpo_pairs.jsonl`、`reward_logs.jsonl` 和 `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`。
+9. 检查 official-aware 数据集 `/data/yiyuldx/swe/outputs/datasets/v0.2/manifest.json`、`dpo_main.jsonl`、`sft_patch.jsonl`、`reward_logs.jsonl` 和 `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`；不要使用 `/data/yiyuldx/swe/outputs/datasets` 根目录旧 JSONL、`legacy_root_20260605` 或 v0.1 作为训练输入。
 10. 每次项目推进都更新 `/home/yiyuldx/swe/reports/progress.html`，并保持 GitHub 同步到 `https://github.com/yiyu0716/swe-code-agent.git`。
 
 请用中文向我汇报。遇到 Docker、权限、数据集访问、模型 API key 等阻塞时，先尝试替代方案；确实需要我提供权限或密钥时再说明。

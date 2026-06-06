@@ -25,6 +25,10 @@ def test_project_overview_page_documents_full_pipeline() -> None:
         "下一步人工介入",
         "/home/yiyuldx/swe",
         "/data/yiyuldx/swe",
+        "build_official_v02.sh",
+        "official_eval.json",
+        "/data/yiyuldx/swe/outputs/datasets/v0.2",
+        "legacy_root_20260605",
         "manual_review_queue.jsonl",
         "manual_annotations.jsonl",
     ]
@@ -153,6 +157,28 @@ def test_data_quality_report_summarizes_annotations_and_filter_rules() -> None:
         assert text in html
 
 
+def test_docs_warn_to_use_official_v02_training_dataset() -> None:
+    combined = "\n".join(
+        [
+            (REPO_ROOT / "README.md").read_text(),
+            (REPO_ROOT / "docs" / "HANDOFF.md").read_text(),
+            (REPO_ROOT / "docs" / "CONTINUE_PROMPT.md").read_text(),
+            (REPO_ROOT / "reports" / "progress.html").read_text(),
+            (REPO_ROOT / "reports" / "data_quality_report.html").read_text(),
+        ]
+    )
+
+    required_text = [
+        "/data/yiyuldx/swe/outputs/datasets/v0.2",
+        "legacy_root_20260605",
+        "build_official_v02.sh",
+        "do not train",
+        "root JSONL",
+    ]
+    for text in required_text:
+        assert text in combined
+
+
 def test_dpo_browser_page_documents_splits_and_loads_api() -> None:
     html_path = REPO_ROOT / "reports" / "dpo_browser.html"
     html = html_path.read_text()
@@ -160,14 +186,15 @@ def test_dpo_browser_page_documents_splits_and_loads_api() -> None:
 
     required_text = [
         "DPO 数据浏览器",
+        "official-aware",
         "dpo_main.jsonl",
-        "dpo_hard_negative.jsonl",
-        "sft_sanity.jsonl",
+        "debug_cases.jsonl",
+        "sft_patch.jsonl",
+        "excluded.jsonl",
         "/api/dpo-dataset",
         "chosen",
         "rejected",
-        "patch_quality",
-        "notes",
+        "official_resolved",
         "数据质量报告",
     ]
     for text in required_text:

@@ -200,13 +200,13 @@
       </div>
       <div class="card">
         <h3>真实 Runs</h3>
-        <span class="metric">53</span>
-        <p>52 个 mini-SWE-agent run 目录 + 1 个 fake baseline</p>
+        <span class="metric">130</span>
+        <p>128 个 report run + 2 个缺 report/旧失败 run；训练筛选只看 official-aware v0.2</p>
       </div>
       <div class="card">
-        <h3>训练数据雏形</h3>
-        <span class="metric">295</span>
-        <p>SFT、DPO、reward、review queue 与 filtered v0.1 的 JSONL 总量</p>
+        <h3>训练数据</h3>
+        <span class="metric">267</span>
+        <p>v0.2 official-aware：SFT 42、DPO 61、debug 61、reward 103</p>
       </div>
     </section>
 
@@ -215,12 +215,12 @@
       <p>
         这个项目是一个面向 Code Agent post-training 的数据工程和评测闭环：把 SWE-bench Lite 任务交给
         <code>mini-SWE-agent + DeepSeek</code> 真实执行，保存每一步轨迹、patch 和测试结果，再把这些 run
-        转成 SFT / DPO / Reward 数据，并通过人工复核把自动标签修正成可训练、可解释、可展示的数据资产。
+        转成 official-aware SFT / DPO / Reward 数据，并通过人工复核把自动标签修正成可解释、可展示的数据资产。
       </p>
       <div class="callout">
         <p>
           你现在的人工介入点不是写代码修 bug，而是判断 agent 失败样本的质量：
-          patch 离 gold patch 有多近、自动失败标签是否正确、这条样本能不能进入 SFT 或 DPO 数据。
+          patch 离 gold patch 有多近、自动失败标签是否正确、这条样本如何用于 debug 和案例分析。训练入选优先看官方 SWE-bench 结果。
         </p>
       </div>
     </section>
@@ -299,10 +299,10 @@
 
           <g class="node">
             <rect x="30" y="310" width="210" height="92" fill="#e8f2fb" stroke="#1769aa"></rect>
-            <text x="48" y="338">9. SFT / DPO / Reward 数据</text>
-            <text x="48" y="361" class="small">build_fake_data.sh</text>
-            <text x="48" y="378" class="small">sft_plan / patch / debug</text>
-            <text x="48" y="395" class="small">dpo_pairs / reward_logs</text>
+          <text x="48" y="338">9. v0.2 训练数据</text>
+          <text x="48" y="361" class="small">build_official_v02.sh</text>
+          <text x="48" y="378" class="small">SFT patch 42 / DPO 61</text>
+          <text x="48" y="395" class="small">official-aware reward logs 103</text>
           </g>
           <path class="arrow" d="M125 256 V310"></path>
 
@@ -345,9 +345,9 @@
           <g class="node">
             <rect x="460" y="480" width="250" height="100" fill="#f8f0fb" stroke="#7a4e9d"></rect>
             <text x="478" y="508">当前核心指标</text>
-            <text x="478" y="531" class="small">52 mini runs / 46 raw traj</text>
-            <text x="478" y="548" class="small">43 DPO pairs / 52 rewards</text>
-            <text x="478" y="565" class="small">52 manual annotations</text>
+          <text x="478" y="531" class="small">108 official_eval files</text>
+          <text x="478" y="548" class="small">42 resolved / 61 unresolved</text>
+          <text x="478" y="565" class="small">52 manual annotations</text>
           </g>
           <path class="arrow branch" d="M695 402 C680 442 635 465 610 480"></path>
 
@@ -386,7 +386,7 @@
           <div class="row"><strong><code>swetrace/schema</code></strong><p>定义 task、trajectory、report、failure label、manual annotation 的稳定数据结构。</p></div>
           <div class="row"><strong><code>swetrace/adapters</code></strong><p>把 fake agent 和 mini-SWE-agent 的输出转成统一 artifact。</p></div>
           <div class="row"><strong><code>swetrace/collect</code></strong><p>选择 SWE-bench 任务、运行 agent、预拉 Docker 镜像、恢复 orphan raw traj、回填 gold patch。</p></div>
-          <div class="row"><strong><code>swetrace/data_builder</code></strong><p>从 run artifacts 构建 SFT plan、SFT patch、SFT debug、DPO pairs 和 reward logs。</p></div>
+          <div class="row"><strong><code>swetrace/data_builder</code></strong><p>从 completed official eval 构建 v0.2 SFT patch、DPO main、debug cases 和 reward logs。</p></div>
           <div class="row"><strong><code>swetrace/labeling</code></strong><p>自动失败分类、人工复核队列、人工 annotation upsert。</p></div>
         </div>
       </div>
@@ -400,8 +400,11 @@
             <tr><td><code>task.json</code></td><td>issue、repo、expected files、gold_patch。</td></tr>
             <tr><td><code>trajectory.jsonl</code></td><td>agent 每一步思考、工具调用、测试和编辑痕迹。</td></tr>
             <tr><td><code>patch.diff</code></td><td>agent 产出的最终 patch。</td></tr>
-            <tr><td><code>report.json</code></td><td>status、patch_apply、tests_passed、resolved、token usage。</td></tr>
+            <tr><td><code>official_eval.json</code></td><td>官方 SWE-bench harness 的 completed、resolved、patch applied 和测试通过状态。</td></tr>
+            <tr><td><code>report.json</code></td><td>status、patch_apply、tests_passed、resolved、token usage；completed 官方标签已回填为主标签，旧 mini 标签保留在 <code>legacy_*</code>。</td></tr>
             <tr><td><code>labels.json</code></td><td>rule-based 自动失败标签。</td></tr>
+            <tr><td><code>/data/yiyuldx/swe/outputs/datasets/v0.2</code></td><td>当前唯一训练入口：SFT patch 42、DPO main 61、debug cases 61、reward logs 103。</td></tr>
+            <tr><td><code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code></td><td>旧 root JSONL 归档；do not train on these root JSONL files。</td></tr>
             <tr><td><code>manual_review_queue.jsonl</code></td><td>你现在要看的人工复核队列。</td></tr>
             <tr><td><code>manual_annotations.jsonl</code></td><td>你人工确认后的标签、patch 质量、SFT/DPO 可用性。</td></tr>
           </tbody>
@@ -413,10 +416,11 @@
       <h2>下一步人工介入</h2>
       <ol>
         <li>打开 <code>/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl</code>，选一条 run。</li>
-        <li>查看对应 run 目录里的 <code>task.json</code>、<code>gold_patch</code>、<code>patch.diff</code>、<code>report.json</code> 和 <code>test.log</code>。</li>
+        <li>查看对应 run 目录里的 <code>task.json</code>、<code>gold_patch</code>、<code>patch.diff</code>、<code>official_eval.json</code>、<code>report.json</code> 和 <code>test.log</code>。</li>
         <li>判断自动标签是否正确：环境失败、patch 应用失败、未完整修复、测试失败。</li>
         <li>判断 <code>patch_quality</code>：<code>close</code>、<code>partial</code>、<code>poor</code>、<code>empty</code>、<code>env_only</code>。</li>
         <li>优先使用 <code>scripts/serve_review_ui.sh</code> 打开 Web 工作台，或用 <code>scripts/annotate_review.sh</code> 写入人工结论，结果进入 <code>manual_annotations.jsonl</code>。</li>
+        <li>冻结训练前确认 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 来自 <code>build_official_v02.sh</code>，且下载闭环审计没有缺口。</li>
       </ol>
       <div class="callout">
         <p><strong>推荐复核顺序：</strong>先看 pydicom 和 pyvista，因为 patch 小、gold patch 明确；再看 astroid、pvlib、marshmallow、sqlfluff。</p>
@@ -426,8 +430,8 @@
     <section class="section">
       <h2>为什么这个项目现在已经有雏形</h2>
       <p>
-        它已经不是只有脚本或报告，而是有真实采集、统一 schema、run artifacts、自动标签、训练数据导出、人工复核入口和网页说明。
-        接下来只要你继续补人工 annotation，就能把“真实失败轨迹”变成可筛选、可解释、可用于后训练实验的数据集。
+        它已经不是只有脚本或报告，而是有真实采集、统一 schema、run artifacts、官方评测回填、训练数据导出、人工复核入口和网页说明。
+        接下来应冻结 v0.2 训练快照，先跑 SFT/DPO 数据格式 smoke，再开始小规模后训练实验。
       </p>
     </section>
   </main>

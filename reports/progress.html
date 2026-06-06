@@ -201,9 +201,11 @@
         和 SWE-Trace 的 patch/SFT/DPO 标准。当前 51 条 SWE-bench 人工复核队列已全部写入 annotation，
         另补 1 条 fake resolved baseline 作为成功 sanity sample。人工复核服务 <code>20039</code>
         已支持直接托管静态报告页，可打开 <code>/annotation_calibration.html</code> 和
-        <code>/data_quality_report.html</code>。当前已导出 v0.1 filtered DPO 数据：
+        <code>/data_quality_report.html</code>。历史上曾导出 v0.1 filtered DPO 数据：
         <code>dpo_main=37</code>、<code>dpo_hard_negative=2</code>、<code>sft_sanity=2</code>、
-        <code>excluded=11</code>，并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本。随后已接入官方 SWE-bench 评测，
+        <code>excluded=11</code>，并新增 <code>reports/dpo_browser.html</code> 浏览 chosen/rejected 样本。旧 root JSONL
+        已归档到 <code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code>，只保留审计追溯价值；
+        当前 do not train on those root JSONL files 或 v0.1 filtered samples。随后已接入官方 SWE-bench 评测，
         并修复 <code>scripts/run_official_eval.sh</code>：每次评测会按 predictions 自动过滤 dataset，
         避免官方 harness 在汇总阶段访问无关仓库 requirements 导致网络失败。旧 <code>report.json</code>
         中由 <code>action was not executed</code> 派生的失败标签不再作为训练标签；
@@ -652,14 +654,23 @@
           </div>
           <span>2026-06-06</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>训练数据入口收口</h3>
+            <p>核对 Opus 新一轮建议后确认：当前 v0.2 已消费官方评测结果，<code>report_official_mismatch=0</code>；真实风险是旧 root JSONL 和 v0.1 仍可能被误用。已将旧 root JSONL 移到 <code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code>，并把 Web 浏览器、review server、handoff 和 README 默认入口统一到 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code>。真实训练只用 <code>build_official_v02.sh</code> 重建的 official-aware v0.2。</p>
+          </div>
+          <span>2026-06-06</span>
+        </div>
       </div>
     </section>
 
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>训练启动门槛已达到：当前 <code>SFT=42/30</code>、<code>DPO=61/60</code>，v0.2 已可作为第一版真实训练输入。</li>
+        <li>训练启动门槛已达到：当前 <code>SFT=42/30</code>、<code>DPO=61/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
         <li>下一步应冻结一个训练快照，先跑 SFT/DPO 数据格式 smoke，再启动小规模训练与 held-out 官方评测对比；继续扩容时仍按 Mini → official eval → 回填 → 重建 → 闭环审计执行。</li>
+        <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 <code>build_fake_data.sh</code> legacy 输出只作历史/调试，不进入训练。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
       </ul>
     </section>

@@ -184,7 +184,7 @@
     <div class="topbar">
       <div>
         <h1>DPO 数据浏览器</h1>
-        <p>浏览 <code>/data/yiyuldx/swe/outputs/datasets/v0.1</code> 导出的 <code>dpo_main.jsonl</code>、<code>dpo_hard_negative.jsonl</code> 和 <code>sft_sanity.jsonl</code>。</p>
+        <p>浏览 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 导出的 official-aware <code>dpo_main.jsonl</code>、<code>debug_cases.jsonl</code>、<code>sft_patch.jsonl</code> 和 <code>excluded.jsonl</code>。</p>
       </div>
       <nav class="nav" aria-label="报告导航">
         <a href="index.html">报告入口</a>
@@ -201,15 +201,15 @@
         <h2>数据 split</h2>
         <div class="tabs">
           <button class="active" data-split="main">main</button>
-          <button data-split="hard">hard-negative</button>
-          <button data-split="sft">sft-sanity</button>
+          <button data-split="debug">debug</button>
+          <button data-split="sft">sft-patch</button>
           <button data-split="excluded">excluded</button>
         </div>
         <p>数据来自 <code>/api/dpo-dataset</code>，chosen 通常是 SWE-bench gold patch，rejected 是 agent patch。</p>
         <div class="stats">
           <div class="stat"><strong id="stat-total">0</strong><span>当前 split</span></div>
-          <div class="stat"><strong id="stat-main">37</strong><span>dpo_main</span></div>
-          <div class="stat"><strong id="stat-hard">2</strong><span>hard</span></div>
+          <div class="stat"><strong id="stat-main">61</strong><span>dpo_main</span></div>
+          <div class="stat"><strong id="stat-sft">42</strong><span>sft_patch</span></div>
         </div>
       </div>
       <div class="panel-body">
@@ -220,7 +220,7 @@
     <section class="panel">
       <div class="panel-head">
         <h2 id="title">请选择一个样本</h2>
-        <p id="subtitle">查看 prompt、chosen、rejected、patch_quality 和 notes。</p>
+        <p id="subtitle">查看 prompt、chosen、rejected、official 评测元数据和 notes。</p>
       </div>
       <div class="panel-body detail-grid">
         <div class="meta" id="meta"></div>
@@ -265,7 +265,7 @@
       document.getElementById('stat-total').textContent = payload.total || 0;
       const counts = state.manifest.counts || {};
       document.getElementById('stat-main').textContent = counts.dpo_main || 0;
-      document.getElementById('stat-hard').textContent = counts.dpo_hard_negative || 0;
+      document.getElementById('stat-sft').textContent = counts.sft_patch || 0;
       renderList();
       selectItem(state.items[0] || null);
     }
@@ -279,8 +279,8 @@
         button.innerHTML = `
           <strong>${meta.task_id || meta.run_id || `item-${index + 1}`}</strong>
           <span>${meta.repo || ''}</span>
-          <span class="badge ${meta.patch_quality || ''}">patch_quality=${meta.patch_quality || 'n/a'}</span>
-          <span class="badge">notes</span>
+          <span class="badge">official_resolved=${text(meta.official_resolved)}</span>
+          <span class="badge">patch_applied=${text(meta.official_patch_successfully_applied)}</span>
         `;
         button.addEventListener('click', () => selectItem(item));
         listEl.appendChild(button);
@@ -303,19 +303,20 @@
       }
       const meta = item.meta || item;
       document.getElementById('title').textContent = meta.task_id || meta.run_id || 'DPO sample';
-      document.getElementById('subtitle').textContent = meta.notes || 'No notes.';
+      document.getElementById('subtitle').textContent = meta.official_report_path || 'No official report path.';
       document.getElementById('meta').innerHTML = [
         ['run_id', meta.run_id],
         ['repo', meta.repo],
-        ['patch_quality', meta.patch_quality],
-        ['human_failure', meta.human_failure],
-        ['dpo_usable', meta.dpo_usable],
-        ['sft_usable', meta.sft_usable],
-        ['notes', meta.notes],
+        ['official_completed', meta.official_completed],
+        ['official_resolved', meta.official_resolved],
+        ['official_patch_successfully_applied', meta.official_patch_successfully_applied],
+        ['official_fail_to_pass_failure', meta.official_fail_to_pass_failure],
+        ['official_pass_to_pass_failure', meta.official_pass_to_pass_failure],
+        ['legacy_resolved', meta.legacy_resolved],
       ].map(([k, v]) => `<span>${k}</span><span>${text(v)}</span>`).join('');
       document.getElementById('prompt').textContent = text(item.prompt);
       document.getElementById('chosen').textContent = text(item.chosen || item.output);
-      document.getElementById('rejected').textContent = text(item.rejected);
+      document.getElementById('rejected').textContent = text(item.rejected || item.agent_patch);
     }
 
     document.querySelectorAll('[data-split]').forEach(button => {

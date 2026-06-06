@@ -39,10 +39,17 @@ Run the fake batch and write `/data/yiyuldx/swe/outputs/reports/summary.csv`:
 ./scripts/run_fake_batch.sh
 ```
 
-Build JSONL datasets from run artifacts:
+Build legacy JSONL datasets from run artifacts for parser/debug smoke checks:
 
 ```bash
 ./scripts/build_fake_data.sh
+```
+
+Build the current official-aware training dataset after Mini collection and official SWE-bench
+evaluation have both completed:
+
+```bash
+./scripts/build_official_v02.sh
 ```
 
 Run a mini-SWE-agent smoke task after installing `mini-extra`:
@@ -154,15 +161,27 @@ Run individual real-agent tasks with:
 sg docker -c 'HTTP_PROXY=http://10.32.192.70:7890 HTTPS_PROXY=http://10.32.192.70:7890 http_proxy=http://10.32.192.70:7890 https_proxy=http://10.32.192.70:7890 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python SWETRACE_MINI_MODEL=deepseek/deepseek-chat SWETRACE_MINI_SUBSET=/data/yiyuldx/swe/cache/swebench_lite SWETRACE_MINI_INSTANCE=sqlfluff__sqlfluff-1625 SWETRACE_MINI_TIMEOUT_SECONDS=600 ./scripts/run_mini_smoke.sh'
 ```
 
-Build training/debug/reward outputs and human review queue:
+Build legacy debug outputs, the current official-aware training dataset, and the human review queue:
 
 ```bash
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/recover_mini_runs.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/enrich_swebench_run_tasks.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_fake_data.sh
+SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_official_v02.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/auto_label_runs.sh
 SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python ./scripts/build_review_queue.sh
 ```
+
+Training data source of truth:
+
+- Use `/data/yiyuldx/swe/outputs/datasets/v0.2` for real SFT/DPO/reward training.
+- The v0.2 builder requires completed official SWE-bench labels and filters out fake tasks,
+  pending official evals, empty patches, patch-apply failures, and missing gold patches.
+- Old root JSONL files from 2026-06-05 were moved to
+  `/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605`; do not train on those root JSONL
+  files or on v0.1 filtered samples.
+- `./scripts/build_fake_data.sh` now writes only to
+  `/data/yiyuldx/swe/outputs/datasets/legacy_build_from_runs` unless overridden.
 
 Record a human review annotation without mutating run artifacts:
 
@@ -190,15 +209,18 @@ http://127.0.0.1:20039/review
 
 Current real-run status:
 
-- 24 unique mini-SWE-agent task IDs have been attempted.
-- 25 raw mini-SWE-agent trajectories have been normalized into SWE-Trace artifacts.
+- 108 non-fake runs have `official_eval.json`; 103 completed official SWE-bench evaluation.
+- 42 runs are official resolved and enter v0.2 SFT.
+- 61 official unresolved runs enter v0.2 DPO/debug.
+- v0.2 contains SFT plan 42, SFT patch 42, DPO main 61, debug cases 61, reward logs 103,
+  excluded 25, and `train_ready=true`.
 - The current SWE-bench Lite dev candidates are exhausted when skipping existing runs.
-- `/data/yiyuldx/swe/outputs/datasets` currently contains 30 SFT-plan rows, 24 SFT-patch rows, 24 SFT-debug rows, 30 reward logs, and 23 gold-vs-agent DPO pairs.
+- `/data/yiyuldx/swe/outputs/datasets/v0.2` is the current official-aware training dataset.
 - The adapter preserves partial trajectories when the outer command times out.
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
 - Manual annotations are written to `/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl`; browser review smoke annotations have been recorded for `pydicom__pydicom-1694` and `pydicom__pydicom-1139`.
 Current broader-batch note: Docker image pulls are now stored on `/data`; the next useful
-step is reviewing labels and patch quality before expanding into larger train/test pools.
+step is freezing a reproducible v0.2 training snapshot and running a small SFT/DPO smoke.
 
 ## Local Progress Report
 

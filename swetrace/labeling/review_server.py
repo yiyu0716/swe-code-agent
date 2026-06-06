@@ -11,11 +11,11 @@ DEFAULT_RUNS = Path("/data/yiyuldx/swe/runs")
 DEFAULT_QUEUE = Path("/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl")
 DEFAULT_ANNOTATIONS = Path("/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl")
 DEFAULT_REPORTS = Path("/home/yiyuldx/swe/reports")
-DEFAULT_DPO_DATASET = Path("/data/yiyuldx/swe/outputs/datasets/v0.1")
+DEFAULT_DPO_DATASET = Path("/data/yiyuldx/swe/outputs/datasets/v0.2")
 _DPO_SPLITS = {
     "main": "dpo_main.jsonl",
-    "hard": "dpo_hard_negative.jsonl",
-    "sft": "sft_sanity.jsonl",
+    "debug": "debug_cases.jsonl",
+    "sft": "sft_patch.jsonl",
     "excluded": "excluded.jsonl",
 }
 

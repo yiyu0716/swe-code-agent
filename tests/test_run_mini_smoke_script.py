@@ -91,19 +91,42 @@ def test_run_mini_smoke_uses_socksio_yolo_timeout_and_instance_metadata(tmp_path
 
 
 def test_data_scripts_default_to_data_directory() -> None:
-    expected_fragments = {
-        "scripts/run_fake.sh": 'OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
-        "scripts/run_fake_batch.sh": 'OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
-        "scripts/build_fake_data.sh": 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
-        "scripts/auto_label_runs.sh": 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
-        "scripts/download_swebench_lite.sh": 'OUT_DIR="${SWETRACE_SWEBENCH_CACHE:-/data/yiyuldx/swe/cache/swebench_lite}"',
-        "scripts/select_swebench_tasks.sh": 'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
-        "scripts/prepare_swebench_images.sh": 'TASKS="${SWETRACE_TASKS:-/data/yiyuldx/swe/outputs/tasks/swebench_lite_dev.jsonl}"',
-        "scripts/build_review_queue.sh": '--runs "${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
-        "scripts/serve_review_ui.sh": 'DPO_DATASET="${SWETRACE_DPO_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.1}"',
-        "scripts/recover_mini_runs.sh": 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"',
-        "scripts/enrich_swebench_run_tasks.sh": 'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
-    }
+    expected_fragments = [
+        ("scripts/run_fake.sh", 'OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"'),
+        ("scripts/run_fake_batch.sh", 'OUT="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"'),
+        ("scripts/build_fake_data.sh", 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"'),
+        (
+            "scripts/build_fake_data.sh",
+            'OUT="${SWETRACE_DATASETS_LEGACY:-/data/yiyuldx/swe/outputs/datasets/legacy_build_from_runs}"',
+        ),
+        (
+            "scripts/build_official_v02.sh",
+            'OUT="${SWETRACE_OFFICIAL_V02_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.2}"',
+        ),
+        ("scripts/auto_label_runs.sh", 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"'),
+        (
+            "scripts/download_swebench_lite.sh",
+            'OUT_DIR="${SWETRACE_SWEBENCH_CACHE:-/data/yiyuldx/swe/cache/swebench_lite}"',
+        ),
+        (
+            "scripts/select_swebench_tasks.sh",
+            'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
+        ),
+        (
+            "scripts/prepare_swebench_images.sh",
+            'TASKS="${SWETRACE_TASKS:-/data/yiyuldx/swe/outputs/tasks/swebench_lite_dev.jsonl}"',
+        ),
+        ("scripts/build_review_queue.sh", '--runs "${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"'),
+        (
+            "scripts/serve_review_ui.sh",
+            'DPO_DATASET="${SWETRACE_DPO_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.2}"',
+        ),
+        ("scripts/recover_mini_runs.sh", 'RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"'),
+        (
+            "scripts/enrich_swebench_run_tasks.sh",
+            'DATASET="${SWETRACE_SWEBENCH_SUBSET:-/data/yiyuldx/swe/cache/swebench_lite}"',
+        ),
+    ]
 
-    for path, fragment in expected_fragments.items():
+    for path, fragment in expected_fragments:
         assert fragment in (REPO_ROOT / path).read_text()

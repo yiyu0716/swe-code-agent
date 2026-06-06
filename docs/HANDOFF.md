@@ -111,6 +111,7 @@ Scripts:
 ./scripts/run_fake.sh
 ./scripts/run_fake_batch.sh
 ./scripts/build_fake_data.sh
+./scripts/build_official_v02.sh
 ./scripts/auto_label_runs.sh
 ./scripts/annotate_review.sh
 ./scripts/serve_review_ui.sh
@@ -151,6 +152,21 @@ Current generated data is under `/data/yiyuldx/swe`:
 - Current closure audit is clean: `missing_mini=0`, `missing_official=0`, `nonempty_patch_missing_official=0`.
 
 These generated files are ignored by git and should stay under `/data/yiyuldx/swe`.
+
+Training data source of truth:
+
+```text
+/data/yiyuldx/swe/outputs/datasets/v0.2
+```
+
+Use `./scripts/build_official_v02.sh` after each closed batch to rebuild this dataset from
+completed official SWE-bench results. Old root JSONL files from 2026-06-05 were archived under
+`/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605`; do not train on those root JSONL
+files, on v0.1 filtered samples, or on `build_fake_data.sh` legacy outputs.
+
+`./scripts/build_fake_data.sh` now writes only to
+`/data/yiyuldx/swe/outputs/datasets/legacy_build_from_runs` by default and is for parser/debug
+smoke checks, not the real training set.
 
 Hard data rule:
 
@@ -303,8 +319,8 @@ http://<server-ip>:20038/
 
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
-3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json` with `swetrace.eval.swebench_official import-statuses`, rebuild v0.2, then run `swetrace.collect.audit_swebench_closure`.
-4. Freeze the current v0.2 dataset snapshot for training, then run data-format smoke checks and a small SFT/DPO training dry run.
+3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json` with `swetrace.eval.swebench_official import-statuses`, rebuild v0.2 with `./scripts/build_official_v02.sh`, then run `swetrace.collect.audit_swebench_closure`.
+4. Freeze the current `/data/yiyuldx/swe/outputs/datasets/v0.2` snapshot for training, then run data-format smoke checks and a small SFT/DPO training dry run.
 5. Continue SWE-bench Lite test split expansion only in closed batches: Mini collection, official evaluation, import/backfill, v0.2 rebuild, and closure audit.
 6. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
 7. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.

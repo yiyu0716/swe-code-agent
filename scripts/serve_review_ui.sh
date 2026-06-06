@@ -8,7 +8,7 @@ PORT="${SWETRACE_REVIEW_PORT:-20039}"
 RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"
 QUEUE="${SWETRACE_REVIEW_QUEUE:-/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl}"
 ANNOTATIONS="${SWETRACE_REVIEW_ANNOTATIONS:-/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl}"
-DPO_DATASET="${SWETRACE_DPO_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.1}"
+DPO_DATASET="${SWETRACE_DPO_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.2}"
 
 "${PYTHON}" -m swetrace.labeling.review_server \
   --host "${HOST}" \

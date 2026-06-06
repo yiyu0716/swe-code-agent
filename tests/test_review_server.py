@@ -210,13 +210,13 @@ def test_review_server_serves_static_report_pages_safely(tmp_path) -> None:
 
 
 def test_load_dpo_dataset_returns_versioned_split_items(tmp_path) -> None:
-    dataset = tmp_path / "v0.1"
+    dataset = tmp_path / "v0.2"
     dataset.mkdir()
     (dataset / "manifest.json").write_text(
         json.dumps(
             {
-                "version": "v0.1-test",
-                "counts": {"dpo_main": 1},
+                "version": "v0.2-test",
+                "counts": {"dpo_main": 1, "debug_cases": 1, "sft_patch": 1, "excluded": 0},
                 "files": {"dpo_main": str(dataset / "dpo_main.jsonl")},
             }
         )
@@ -243,9 +243,15 @@ def test_load_dpo_dataset_returns_versioned_split_items(tmp_path) -> None:
 
     assert payload["split"] == "main"
     assert payload["total"] == 1
-    assert payload["manifest"]["version"] == "v0.1-test"
+    assert payload["manifest"]["version"] == "v0.2-test"
     assert payload["items"][0]["chosen"] == "gold patch"
     assert payload["items"][0]["rejected"] == "agent patch"
+
+
+def test_review_server_defaults_to_official_v02_dataset() -> None:
+    from swetrace.labeling.review_server import DEFAULT_DPO_DATASET
+
+    assert DEFAULT_DPO_DATASET == Path("/data/yiyuldx/swe/outputs/datasets/v0.2")
 
 
 def test_load_dpo_dataset_rejects_unknown_split(tmp_path) -> None:
