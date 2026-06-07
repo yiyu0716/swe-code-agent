@@ -210,10 +210,12 @@ http://127.0.0.1:20039/review
 Current real-run status:
 
 - 108 non-fake runs have `official_eval.json`; 103 completed official SWE-bench evaluation.
-- 42 runs are official resolved and enter v0.2 SFT.
-- 61 official unresolved runs enter v0.2 DPO/debug.
-- v0.2 contains SFT plan 42, SFT patch 42, DPO main 61, debug cases 61, reward logs 103,
-  excluded 25, and `train_ready=true`.
+- 42 runs are official resolved; after exact patch-output dedupe, 41 rows enter v0.2 SFT.
+- 61 official unresolved runs are DPO/debug candidates; after exact pair dedupe, 60 rows enter v0.2 DPO/debug.
+- v0.2 contains SFT plan 41, SFT patch 41, DPO main 60, debug cases 60, reward logs 103,
+  excluded 27, and `train_ready=true`.
+- DPO chosen patches now prefer same-task agent-resolved patches when available; current source mix is
+  `agent_resolved_patch=1`, `swebench_gold_patch=59`.
 - The current SWE-bench Lite dev candidates are exhausted when skipping existing runs.
 - `/data/yiyuldx/swe/outputs/datasets/v0.2` is the current official-aware training dataset.
 - The adapter preserves partial trajectories when the outer command times out.

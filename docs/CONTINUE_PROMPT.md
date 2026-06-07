@@ -29,7 +29,7 @@
 - 人工 review Web UI：`serve_review_ui.sh`，默认 <http://127.0.0.1:20039/review>
 - gold-patch vs agent-patch DPO pair 构建
 - official-aware v0.2 数据构建脚本：`build_official_v02.sh`
-- 当前 `/data/yiyuldx/swe/outputs/datasets/v0.2` 已有 SFT plan 42、patch 42、DPO main 61、debug cases 61、reward logs 103，`train_ready=true`
+- 当前 `/data/yiyuldx/swe/outputs/datasets/v0.2` 已有 SFT plan 41、patch 41、DPO main 60、debug cases 60、reward logs 103，`train_ready=true`；DPO chosen source 为 `agent_resolved_patch=1`、`swebench_gold_patch=59`
 - 旧 root JSONL 已归档到 `/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605`；do not train on those root JSONL files 或 v0.1 filtered samples
 - 当前 SWE-bench Lite dev 本地任务已跑完；下一批优先冻结 v0.2 训练快照、跑数据格式 smoke 和小规模 SFT/DPO dry run
 

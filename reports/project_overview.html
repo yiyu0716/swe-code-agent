@@ -205,8 +205,8 @@
       </div>
       <div class="card">
         <h3>训练数据</h3>
-        <span class="metric">267</span>
-        <p>v0.2 official-aware：SFT 42、DPO 61、debug 61、reward 103</p>
+        <span class="metric">264</span>
+        <p>v0.2 official-aware：SFT 41、DPO 60、debug 60、reward 103</p>
       </div>
     </section>
 
@@ -301,7 +301,7 @@
             <rect x="30" y="310" width="210" height="92" fill="#e8f2fb" stroke="#1769aa"></rect>
           <text x="48" y="338">9. v0.2 训练数据</text>
           <text x="48" y="361" class="small">build_official_v02.sh</text>
-          <text x="48" y="378" class="small">SFT patch 42 / DPO 61</text>
+          <text x="48" y="378" class="small">SFT patch 41 / DPO 60</text>
           <text x="48" y="395" class="small">official-aware reward logs 103</text>
           </g>
           <path class="arrow" d="M125 256 V310"></path>
@@ -403,7 +403,7 @@
             <tr><td><code>official_eval.json</code></td><td>官方 SWE-bench harness 的 completed、resolved、patch applied 和测试通过状态。</td></tr>
             <tr><td><code>report.json</code></td><td>status、patch_apply、tests_passed、resolved、token usage；completed 官方标签已回填为主标签，旧 mini 标签保留在 <code>legacy_*</code>。</td></tr>
             <tr><td><code>labels.json</code></td><td>rule-based 自动失败标签。</td></tr>
-            <tr><td><code>/data/yiyuldx/swe/outputs/datasets/v0.2</code></td><td>当前唯一训练入口：SFT patch 42、DPO main 61、debug cases 61、reward logs 103。</td></tr>
+            <tr><td><code>/data/yiyuldx/swe/outputs/datasets/v0.2</code></td><td>当前唯一训练入口：SFT patch 41、DPO main 60、debug cases 60、reward logs 103。</td></tr>
             <tr><td><code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code></td><td>旧 root JSONL 归档；do not train on these root JSONL files。</td></tr>
             <tr><td><code>manual_review_queue.jsonl</code></td><td>你现在要看的人工复核队列。</td></tr>
             <tr><td><code>manual_annotations.jsonl</code></td><td>你人工确认后的标签、patch 质量、SFT/DPO 可用性。</td></tr>

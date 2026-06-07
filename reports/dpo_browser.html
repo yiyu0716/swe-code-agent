@@ -205,11 +205,11 @@
           <button data-split="sft">sft-patch</button>
           <button data-split="excluded">excluded</button>
         </div>
-        <p>数据来自 <code>/api/dpo-dataset</code>，chosen 通常是 SWE-bench gold patch，rejected 是 agent patch。</p>
+        <p>数据来自 <code>/api/dpo-dataset</code>，chosen 优先同任务 agent resolved patch；否则使用 SWE-bench gold patch，rejected 是 agent unresolved patch。</p>
         <div class="stats">
           <div class="stat"><strong id="stat-total">0</strong><span>当前 split</span></div>
-          <div class="stat"><strong id="stat-main">61</strong><span>dpo_main</span></div>
-          <div class="stat"><strong id="stat-sft">42</strong><span>sft_patch</span></div>
+          <div class="stat"><strong id="stat-main">60</strong><span>dpo_main</span></div>
+          <div class="stat"><strong id="stat-sft">41</strong><span>sft_patch</span></div>
         </div>
       </div>
       <div class="panel-body">

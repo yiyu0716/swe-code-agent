@@ -216,19 +216,19 @@
       <div class="metric">
         <h3>官方 resolved</h3>
         <strong>42</strong>
-        <p><code>42 official resolved</code>，这些是真实 SFT 正样本来源。</p>
+        <p><code>42 official resolved</code>，去重后 41 条进入 SFT 训练集。</p>
       </div>
       <div class="metric">
         <h3>v0.2 训练集</h3>
-        <strong>61 DPO</strong>
-        <p><code>SFT patch 42</code>、<code>DPO main 61</code>、<code>reward logs 103</code>；<code>train_ready=true</code>。</p>
+        <strong>60 DPO</strong>
+        <p><code>SFT patch 41</code>、<code>DPO main 60</code>、<code>reward logs 103</code>；<code>train_ready=true</code>。</p>
       </div>
     </section>
 
     <section class="section">
       <h2>总览结论</h2>
-      <p>当前最重要的修正是：早期 <code>report.json</code> 里的 <code>tests_passed/resolved</code> 来自 mini-SWE-agent 退出前的轨迹日志，很多是 <code>action was not executed</code>，不能作为成功/失败标签。现在已经接入官方 SWE-bench harness：108 个 run 写入 <code>official_eval.json</code>，其中 103 completed、42 official resolved、61 official unresolved 可进入 DPO/debug，5 个 requests run 仍 pending。本机 94 个已下载 SWE-bench official latest 镜像也已通过下载闭环审计，当前 <code>missing_mini=0</code>、<code>missing_official=0</code>。</p>
-      <div class="note">质量结论已改变：旧 filtered DPO v0.1 可作为结构样本参考，但不能直接训练。当前 v0.2 已按官方结果重建：只有 official resolved 进 SFT，只有 official unresolved + gold patch 进 DPO/debug。103 个 completed 官方评测结果已同步回填到 <code>runs/*/report.json</code> 主标签，旧 mini 标签保留在 <code>legacy_*</code> 字段；当前 <code>report_official_mismatch=0</code>。旧 root JSONL 已归档到 <code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code>；do not train on those root JSONL files、v0.1 filtered samples 或 <code>build_fake_data.sh</code> legacy 输出。</div>
+      <p>当前最重要的修正是：早期 <code>report.json</code> 里的 <code>tests_passed/resolved</code> 来自 mini-SWE-agent 退出前的轨迹日志，很多是 <code>action was not executed</code>，不能作为成功/失败标签。现在已经接入官方 SWE-bench harness：108 个 run 写入 <code>official_eval.json</code>，其中 103 completed、42 official resolved、61 official unresolved DPO/debug 候选，5 个 requests run 仍 pending。本机 94 个已下载 SWE-bench official latest 镜像也已通过下载闭环审计，当前 <code>missing_mini=0</code>、<code>missing_official=0</code>。</p>
+      <div class="note">质量结论已改变：旧 filtered DPO v0.1 可作为结构样本参考，但不能直接训练。当前 v0.2 已按官方结果重建并做精确 hash 去重：只有 official resolved 进 SFT，只有 official unresolved 且 patch applied 进 DPO/debug；DPO chosen 优先同任务 agent-resolved patch，否则使用 SWE-bench gold patch。103 个 completed 官方评测结果已同步回填到 <code>runs/*/report.json</code> 主标签，旧 mini 标签保留在 <code>legacy_*</code> 字段；当前 <code>report_official_mismatch=0</code>、<code>dpo_exact_duplicate_extra=0</code>、<code>sft_output_duplicate_extra=0</code>。旧 root JSONL 已归档到 <code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code>；do not train on those root JSONL files、v0.1 filtered samples 或 <code>build_fake_data.sh</code> legacy 输出。</div>
     </section>
 
     <section class="section">
@@ -240,8 +240,8 @@
         <tbody>
           <tr><td>official_eval files</td><td>108</td><td>已写入每个 run 的官方状态文件。</td><td>作为训练筛选唯一成功/失败标签。</td></tr>
           <tr><td>completed</td><td>103</td><td>官方容器内成功应用 patch，并执行 gold tests 产出 <code>report.json</code>。</td><td><span class="tag ok">可信标签</span></td></tr>
-          <tr><td>resolved</td><td>42</td><td>FAIL_TO_PASS 全过且 PASS_TO_PASS 未回归。</td><td><span class="tag ok">真实 SFT 正样本</span></td></tr>
-          <tr><td>unresolved</td><td>61</td><td>patch 可应用但未通过官方判定。</td><td><span class="tag warn">DPO/debug 候选</span></td></tr>
+          <tr><td>resolved</td><td>42</td><td>FAIL_TO_PASS 全过且 PASS_TO_PASS 未回归。</td><td><span class="tag ok">41 条去重后 SFT 正样本</span></td></tr>
+          <tr><td>unresolved</td><td>61</td><td>patch 可应用但未通过官方判定。</td><td><span class="tag warn">60 条去重后 DPO/debug</span></td></tr>
           <tr><td>requests pending</td><td>5</td><td>5 个 requests run 仍不稳定；1 个 requests run 已完成并进入 DPO。</td><td><span class="tag warn">不阻塞主训练集</span></td></tr>
           <tr><td>report backfill</td><td>103</td><td><code>report.json</code> 主标签已由官方结果覆盖，原 mini 标签保留为 <code>legacy_*</code>。</td><td><span class="tag ok">mismatch=0</span></td></tr>
         </tbody>
@@ -323,7 +323,7 @@
           <tr><th>规则</th><th>当前数量</th><th>是否入选</th><th>说明</th></tr>
         </thead>
         <tbody>
-          <tr><td>官方 resolved</td><td>42 条真实 run</td><td><span class="tag ok">已入选 v0.2</span></td><td><code>SFT patch 42</code>，只来自 official completed + patch applied + resolved。</td></tr>
+          <tr><td>官方 resolved</td><td>42 条真实 run</td><td><span class="tag ok">已入选 v0.2</span></td><td><code>SFT patch 41</code>，只来自 official completed + patch applied + resolved，并过滤 1 条重复 output。</td></tr>
           <tr><td>旧 sanity SFT</td><td>SFT 可用 2</td><td><span class="tag warn">仅作历史 sanity</span></td><td>旧人工规则包含 fake baseline，不能混入 v0.2 真实训练集。</td></tr>
           <tr><td>官方 unresolved 但人工 close</td><td>已按官方结果重算</td><td><span class="tag warn">转 DPO/debug</span></td><td>不再复制 agent patch 做 SFT，避免训练错误修复。</td></tr>
           <tr><td>partial / poor / empty</td><td>23 条</td><td><span class="tag bad">不入选</span></td><td>避免教模型复制不完整或错误修复。</td></tr>
@@ -339,14 +339,14 @@
           <tr><th>候选集</th><th>数量</th><th>用途</th><th>建议</th></tr>
         </thead>
         <tbody>
-          <tr><td>官方 unresolved + 有 gold patch</td><td>61 条已确认</td><td>可信 rejected vs gold</td><td><span class="tag ok">已入选 v0.2</span></td></tr>
+          <tr><td>官方 unresolved + patch applied</td><td>61 条已确认</td><td>可信 rejected；chosen 优先同任务成功 agent patch，否则 gold patch</td><td><span class="tag ok">60 条去重后入选 v0.2</span></td></tr>
           <tr><td>旧 <code>close/partial + dpo_usable=true</code></td><td>38 条候选</td><td>人工内容判断</td><td><span class="tag warn">仅作历史参考</span></td></tr>
           <tr><td><code>poor</code> 且 <code>dpo_usable=true</code></td><td>2</td><td>hard negative</td><td><span class="tag warn">单独分层</span></td></tr>
           <tr><td><code>env_only</code> / <code>empty</code></td><td>8</td><td>失败监控</td><td><span class="tag bad">排除训练</span></td></tr>
           <tr><td>DPO 目标不清楚</td><td>3</td><td>sqlfluff-1625 语义/gold 不一致</td><td><span class="tag bad">暂不导出</span></td></tr>
         </tbody>
       </table>
-      <div class="note">当前 official-aware v0.2 为 <code>SFT patch 42</code>、<code>DPO main 61</code>、<code>debug_cases 61</code>、<code>reward logs 103</code>，并且 <code>train_ready=true</code>。审计结果：无 bad SFT、无 bad DPO、无 degenerate DPO pair；SWE-bench closure 审计 <code>nonempty_patch_missing_official=0</code>。全量 run 里唯一未评测非空 patch 是 <code>fake-python-bug-001</code> sanity baseline，不属于 SWE-bench 训练数据。训练入口只有 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code>。</div>
+      <div class="note">当前 official-aware v0.2 为 <code>SFT patch 41</code>、<code>DPO main 60</code>、<code>debug_cases 60</code>、<code>reward logs 103</code>、<code>excluded 27</code>，并且 <code>train_ready=true</code>。DPO chosen source 为 <code>agent_resolved_patch=1</code>、<code>swebench_gold_patch=59</code>。审计结果：无 bad SFT、无 bad DPO、无 degenerate DPO pair、无 exact duplicate；SWE-bench closure 审计 <code>nonempty_patch_missing_official=0</code>。全量 run 里唯一未评测非空 patch 是 <code>fake-python-bug-001</code> sanity baseline，不属于 SWE-bench 训练数据。训练入口只有 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code>。</div>
     </section>
 
     <section class="section">
@@ -382,8 +382,8 @@
     <section class="section">
       <h2>下一步</h2>
       <ol>
-        <li>SFT 正例已经超过启动门槛：当前 <code>SFT patch 42</code>，门槛为 <code>30</code>。</li>
-        <li>DPO 已达到启动门槛：当前 <code>DPO main 61</code>，门槛为 <code>60</code>。</li>
+        <li>SFT 正例已经超过启动门槛：当前 <code>SFT patch 41</code>，门槛为 <code>30</code>。</li>
+        <li>DPO 已达到启动门槛：当前 <code>DPO main 60</code>，门槛为 <code>60</code>。</li>
         <li>下一步冻结 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 训练快照，先跑数据格式 smoke，再启动小规模 SFT/DPO 训练；后续扩容仍采用小批策略：预拉镜像、运行 Mini、filtered official eval、导入 <code>official_eval.json</code> 并自动回填 <code>report.json</code>、运行 <code>build_official_v02.sh</code> 重建 v0.2、运行下载闭环审计。</li>
         <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 legacy build 输出只作审计/调试，不进入训练。</li>
         <li>5 个 requests pending run 暂不阻塞主线，后续作为专项稳定性问题处理。</li>

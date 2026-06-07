@@ -1,4 +1,5 @@
 import json
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,11 @@ def export_official_v02(
     debug_cases: list[dict[str, Any]] = []
     reward_logs: list[dict[str, Any]] = []
     excluded: list[dict[str, Any]] = []
+    seen_sft_patch_outputs: set[str] = set()
+    seen_dpo_pairs: set[str] = set()
+    dpo_chosen_sources = {"agent_resolved_patch": 0, "swebench_gold_patch": 0}
+    run_records: list[dict[str, Any]] = []
+    resolved_agent_patches: dict[str, dict[str, Any]] = {}
 
     for run_dir in sorted(path for path in runs.iterdir() if path.is_dir()):
         required = [run_dir / "task.json", run_dir / "report.json"]
@@ -38,7 +44,37 @@ def export_official_v02(
         patch = _read_text(run_dir / "patch.diff")
         steps = _read_steps(run_dir / "trajectory.jsonl")
         base_meta = _meta(task=task, report=report, official=official, run_dir=run_dir)
+        record = {
+            "run_dir": run_dir,
+            "task": task,
+            "report": report,
+            "official": official,
+            "patch": patch,
+            "steps": steps,
+            "base_meta": base_meta,
+        }
+        run_records.append(record)
 
+        if (
+            not task.task_id.startswith("fake-")
+            and task.source != "fake"
+            and official is not None
+            and official.get("completed")
+            and official.get("resolved")
+            and official.get("patch_successfully_applied")
+            and patch.strip()
+        ):
+            resolved_agent_patches.setdefault(
+                task.task_id,
+                {"patch": patch, "meta": base_meta},
+            )
+
+    for record in run_records:
+        task = record["task"]
+        official = record["official"]
+        patch = record["patch"]
+        steps = record["steps"]
+        base_meta = record["base_meta"]
         if task.task_id.startswith("fake-") or task.source == "fake":
             excluded.append({**base_meta, "reason": "fake_or_synthetic"})
             continue
@@ -57,6 +93,11 @@ def export_official_v02(
 
         reward_logs.append(_reward_log(base_meta))
         if official.get("resolved"):
+            patch_hash = _stable_hash({"output": patch})
+            if patch_hash in seen_sft_patch_outputs:
+                excluded.append({**base_meta, "reason": "duplicate_sft_patch"})
+                continue
+            seen_sft_patch_outputs.add(patch_hash)
             plan = build_sft_plan(task, steps)
             plan["meta"] = base_meta
             sft_plan.append(plan)
@@ -68,29 +109,67 @@ def export_official_v02(
         if not task.gold_patch:
             excluded.append({**base_meta, "reason": "missing_gold_patch"})
             continue
+        prompt = _task_prompt(task)
+        chosen = task.gold_patch
+        chosen_meta = {
+            "source": "swebench_gold_patch",
+            "task_id": task.task_id,
+            "repo": task.repo,
+            "resolved": True,
+            "tests_passed": True,
+        }
+        chosen_source = "swebench_gold_patch"
+        if resolved_agent := resolved_agent_patches.get(task.task_id):
+            chosen = resolved_agent["patch"]
+            resolved_meta = resolved_agent["meta"]
+            chosen_meta = {
+                "source": "agent_resolved_patch",
+                "run_id": resolved_meta["run_id"],
+                "task_id": task.task_id,
+                "repo": task.repo,
+                "resolved": True,
+                "tests_passed": True,
+                "official_report_path": resolved_meta.get("official_report_path"),
+            }
+            chosen_source = "agent_resolved_patch"
+        if chosen == patch:
+            chosen = task.gold_patch
+            chosen_meta = {
+                "source": "swebench_gold_patch",
+                "task_id": task.task_id,
+                "repo": task.repo,
+                "resolved": True,
+                "tests_passed": True,
+            }
+            chosen_source = "swebench_gold_patch"
+        if chosen == patch:
+            excluded.append({**base_meta, "reason": "degenerate_dpo_pair"})
+            continue
+        dpo_hash = _stable_hash({"prompt": prompt, "chosen": chosen, "rejected": patch})
+        if dpo_hash in seen_dpo_pairs:
+            excluded.append({**base_meta, "reason": "duplicate_dpo_pair"})
+            continue
+        seen_dpo_pairs.add(dpo_hash)
+        dpo_chosen_sources[chosen_source] += 1
         dpo_main.append(
             {
                 "type": "dpo_pair",
-                "prompt": _task_prompt(task),
-                "chosen": task.gold_patch,
+                "prompt": prompt,
+                "chosen": chosen,
                 "rejected": patch,
                 "meta": base_meta,
-                "chosen_meta": {
-                    "source": "swebench_gold_patch",
-                    "task_id": task.task_id,
-                    "repo": task.repo,
-                    "resolved": True,
-                    "tests_passed": True,
-                },
+                "chosen_meta": chosen_meta,
                 "rejected_meta": base_meta,
             }
         )
         debug_cases.append(
             {
                 "type": "debug_case",
-                "prompt": _task_prompt(task),
+                "prompt": prompt,
                 "agent_patch": patch,
                 "gold_patch": task.gold_patch,
+                "chosen_patch": chosen,
+                "chosen_source": chosen_source,
                 "official_fail_to_pass_failure": int(official.get("fail_to_pass_failure") or 0),
                 "official_pass_to_pass_failure": int(official.get("pass_to_pass_failure") or 0),
                 "meta": base_meta,
@@ -114,8 +193,14 @@ def export_official_v02(
         "quality_gate": {
             "requires_official_eval": True,
             "sft_rule": "official completed + patch applied + resolved",
-            "dpo_rule": "official completed + patch applied + unresolved + gold patch",
-            "excluded_rule": "fake, pending, missing official eval, empty patch, patch apply fail, or missing gold",
+            "dpo_rule": (
+                "official completed + patch applied + unresolved; "
+                "chosen is same-task agent resolved patch when available, otherwise SWE-bench gold patch"
+            ),
+            "excluded_rule": (
+                "fake, pending, missing official eval, empty patch, patch apply fail, missing gold, "
+                "degenerate DPO pair, or exact duplicate training row"
+            ),
             "min_sft": min_sft,
             "min_dpo": min_dpo,
         },
@@ -128,6 +213,7 @@ def export_official_v02(
             "excluded": len(excluded),
             "train_ready": train_ready,
         },
+        "dpo_chosen_sources": dpo_chosen_sources,
         "files": {
             "sft_plan": str(out / "sft_plan.jsonl"),
             "sft_patch": str(out / "sft_patch.jsonl"),
@@ -196,6 +282,12 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     )
 
 
+def _stable_hash(payload: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()
+    ).hexdigest()
+
+
 def _task_prompt(task: TaskSpec) -> str:
     expected = ", ".join(task.expected_files)
     return (
@@ -216,6 +308,7 @@ def _meta(
     official_completed = bool(official.get("completed")) if official else False
     official_resolved = bool(official.get("resolved")) if official else False
     official_patch_applied = bool(official.get("patch_successfully_applied")) if official else False
+    official_tests_passed = bool(official.get("tests_passed")) if official else False
     return {
         "run_id": report.run_id,
         "task_id": report.task_id,
@@ -231,6 +324,7 @@ def _meta(
         ),
         "official_completed": official_completed,
         "official_resolved": official_resolved,
+        "official_tests_passed": official_tests_passed,
         "official_patch_successfully_applied": official_patch_applied,
         "official_fail_to_pass_success": int((official or {}).get("fail_to_pass_success") or 0),
         "official_fail_to_pass_failure": int((official or {}).get("fail_to_pass_failure") or 0),
@@ -244,6 +338,7 @@ def _meta(
 
 def _reward_log(meta: dict[str, Any]) -> dict[str, Any]:
     resolved = bool(meta["official_resolved"])
+    tests_passed = bool(meta["official_tests_passed"])
     reward = 1.0 if resolved else 0.0
     return {
         "type": "official_reward_log",
@@ -252,6 +347,8 @@ def _reward_log(meta: dict[str, Any]) -> dict[str, Any]:
         "reward": reward,
         "official_completed": meta["official_completed"],
         "official_resolved": resolved,
+        "tests_passed": tests_passed,
+        "resolved": resolved,
         "official_patch_successfully_applied": meta["official_patch_successfully_applied"],
         "meta": meta,
     }

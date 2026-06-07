@@ -104,6 +104,110 @@ def test_export_official_v02_reports_train_ready_when_minimum_counts_are_met(tmp
     assert summary["train_ready"] is True
 
 
+def test_export_official_v02_prefers_resolved_agent_patch_for_same_task_dpo(tmp_path) -> None:
+    runs = tmp_path / "runs"
+    _write_run(
+        runs,
+        "agent-resolved",
+        "task-shared",
+        agent_patch="agent resolved patch",
+        official={"completed": True, "resolved": True, "patch_successfully_applied": True},
+    )
+    _write_run(
+        runs,
+        "agent-unresolved",
+        "task-shared",
+        agent_patch="agent unresolved patch",
+        official={"completed": True, "resolved": False, "patch_successfully_applied": True},
+    )
+
+    summary = export_official_v02(
+        runs=runs,
+        out=tmp_path / "datasets" / "v0.2",
+        version="v0.2-test",
+    )
+
+    dpo_rows = _read_jsonl(tmp_path / "datasets" / "v0.2" / "dpo_main.jsonl")
+
+    assert summary["dpo_main"] == 1
+    assert dpo_rows[0]["chosen"] == "agent resolved patch"
+    assert dpo_rows[0]["chosen_meta"]["source"] == "agent_resolved_patch"
+    assert dpo_rows[0]["chosen_meta"]["run_id"] == "agent-resolved"
+    assert dpo_rows[0]["rejected"] == "agent unresolved patch"
+
+
+def test_export_official_v02_deduplicates_exact_training_rows(tmp_path) -> None:
+    runs = tmp_path / "runs"
+    for index in range(2):
+        _write_run(
+            runs,
+            f"resolved-duplicate-{index}",
+            f"task-resolved-duplicate-{index}",
+            agent_patch="same resolved patch",
+            official={"completed": True, "resolved": True, "patch_successfully_applied": True},
+        )
+        _write_run(
+            runs,
+            f"unresolved-duplicate-{index}",
+            "task-unresolved-duplicate",
+            agent_patch="same unresolved patch",
+            official={"completed": True, "resolved": False, "patch_successfully_applied": True},
+        )
+
+    summary = export_official_v02(
+        runs=runs,
+        out=tmp_path / "datasets" / "v0.2",
+        version="v0.2-test",
+    )
+
+    sft_rows = _read_jsonl(tmp_path / "datasets" / "v0.2" / "sft_patch.jsonl")
+    dpo_rows = _read_jsonl(tmp_path / "datasets" / "v0.2" / "dpo_main.jsonl")
+    excluded_rows = _read_jsonl(tmp_path / "datasets" / "v0.2" / "excluded.jsonl")
+
+    assert summary["sft_patch"] == 1
+    assert summary["sft_plan"] == 1
+    assert summary["dpo_main"] == 1
+    assert summary["debug_cases"] == 1
+    assert sft_rows[0]["output"] == "same resolved patch"
+    assert dpo_rows[0]["rejected"] == "same unresolved patch"
+    assert {row["reason"] for row in excluded_rows} == {
+        "duplicate_sft_patch",
+        "duplicate_dpo_pair",
+    }
+
+
+def test_export_official_v02_reward_logs_expose_official_tests_passed(tmp_path) -> None:
+    runs = tmp_path / "runs"
+    _write_run(
+        runs,
+        "resolved-run",
+        "task-resolved",
+        agent_patch="resolved patch",
+        official={"completed": True, "resolved": True, "patch_successfully_applied": True},
+    )
+    _write_run(
+        runs,
+        "unresolved-run",
+        "task-unresolved",
+        agent_patch="unresolved patch",
+        official={"completed": True, "resolved": False, "patch_successfully_applied": True},
+    )
+
+    export_official_v02(
+        runs=runs,
+        out=tmp_path / "datasets" / "v0.2",
+        version="v0.2-test",
+    )
+
+    reward_rows = _read_jsonl(tmp_path / "datasets" / "v0.2" / "reward_logs.jsonl")
+    by_task = {row["task_id"]: row for row in reward_rows}
+
+    assert by_task["task-resolved"]["tests_passed"] is True
+    assert by_task["task-resolved"]["resolved"] is True
+    assert by_task["task-unresolved"]["tests_passed"] is False
+    assert by_task["task-unresolved"]["resolved"] is False
+
+
 def test_export_official_v02_cli_writes_versioned_dataset(tmp_path) -> None:
     runs = tmp_path / "runs"
     _write_run(

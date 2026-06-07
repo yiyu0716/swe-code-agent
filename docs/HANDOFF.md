@@ -140,13 +140,14 @@ Current generated data is under `/data/yiyuldx/swe`:
 
 - 108 non-fake runs have `official_eval.json`.
 - 103 runs completed official SWE-bench evaluation.
-- 42 runs are official resolved and enter v0.2 SFT.
-- 61 official unresolved runs enter v0.2 DPO/debug.
+- 42 runs are official resolved; after exact patch-output dedupe, 41 rows enter v0.2 SFT.
+- 61 official unresolved runs are DPO/debug candidates; after exact pair dedupe, 60 rows enter v0.2 DPO/debug.
 - 5 old `psf/requests` runs are still pending and excluded from training labels.
 - 103 completed official labels have been backfilled into `runs/*/report.json` main fields.
 - The old mini-SWE-agent labels are preserved under `legacy_*` fields.
 - Current report/official audit is clean: `report_official_mismatch=0`.
-- v0.2 dataset rows: SFT plan 42, SFT patch 42, DPO main 61, debug cases 61, reward logs 103, excluded 25.
+- v0.2 dataset rows: SFT plan 41, SFT patch 41, DPO main 60, debug cases 60, reward logs 103, excluded 27.
+- v0.2 DPO chosen sources: `agent_resolved_patch=1`, `swebench_gold_patch=59`.
 - `train_ready=true` because the current gate is `SFT >= 30` and `DPO >= 60`.
 - Local Docker has 94 SWE-bench official `latest` images with corresponding Mini run and official eval records.
 - Current closure audit is clean: `missing_mini=0`, `missing_official=0`, `nonempty_patch_missing_official=0`.
@@ -364,4 +365,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=42` and `DPO main=61`. The next valuable milestone is freezing a reproducible training snapshot and running a small SFT/DPO smoke, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.
+Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=41` and `DPO main=60` after exact training-row dedupe. The next valuable milestone is freezing a reproducible training snapshot and running a small SFT/DPO smoke, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.

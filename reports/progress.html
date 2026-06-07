@@ -160,17 +160,17 @@
       <div class="card">
         <h3>官方 Resolved</h3>
         <span class="metric">42</span>
-        <p>42 个官方 resolved；全部来自真实 SWE-bench run，是当前 SFT 正样本来源</p>
+        <p>42 个官方 resolved；去重后 41 条进入当前 SFT 训练集</p>
       </div>
       <div class="card">
         <h3>SFT Patch</h3>
-        <span class="metric">42</span>
+        <span class="metric">41</span>
         <p>v0.2 只收 official completed + patch applied + resolved</p>
       </div>
       <div class="card">
         <h3>DPO Main</h3>
-        <span class="metric">61</span>
-        <p>v0.2 只收 official unresolved + gold patch + agent patch</p>
+        <span class="metric">60</span>
+        <p>v0.2 只收 official unresolved；chosen 优先同任务成功 agent patch，否则 gold patch</p>
       </div>
     </section>
 
@@ -213,8 +213,9 @@
         report 与 official_eval 脱节。当前新增
         <code>swetrace.collect.audit_swebench_closure</code> 闭环审计：每个已下载 SWE-bench official
         latest 镜像都必须有 Mini 采集和官方评测，当前审计为 <code>missing_mini=0</code>、
-        <code>missing_official=0</code>。当前 official-aware v0.2 为 <code>SFT patch=42</code>、
-        <code>DPO main=61</code>、<code>reward logs=103</code>；
+        <code>missing_official=0</code>。当前 official-aware v0.2 为 <code>SFT patch=41</code>、
+        <code>DPO main=60</code>、<code>debug_cases=60</code>、<code>reward logs=103</code>；
+        DPO chosen source 为 <code>agent_resolved_patch=1</code>、<code>swebench_gold_patch=59</code>。
         <code>train_ready=true</code>，已达到当前启动真实训练的质量门槛。
       </p>
     </section>
@@ -650,9 +651,17 @@
           <span class="badge done">完成</span>
           <div>
             <h3>DPO 训练门槛达成</h3>
-            <p>在不新增大下载的前提下复用已有 pvlib 镜像，重新采集 <code>pvlib__pvlib-python-1072</code>、<code>1154</code>、<code>1606</code>、<code>1707</code>、<code>1854</code> 五条 Mini 轨迹，并以官方 SWE-bench harness 完成 5/5 评测；5 条均 patch apply 成功且 official unresolved，已回填 report 并重建 v0.2。当前 <code>SFT patch=42</code>、<code>DPO main=61</code>、<code>reward logs=103</code>、<code>train_ready=true</code>。</p>
+            <p>在不新增大下载的前提下复用已有 pvlib 镜像，重新采集 <code>pvlib__pvlib-python-1072</code>、<code>1154</code>、<code>1606</code>、<code>1707</code>、<code>1854</code> 五条 Mini 轨迹，并以官方 SWE-bench harness 完成 5/5 评测；5 条均 patch apply 成功且 official unresolved，已回填 report 并重建 v0.2。当前训练入口随后已做精确去重并更新为 <code>SFT patch=41</code>、<code>DPO main=60</code>、<code>reward logs=103</code>、<code>train_ready=true</code>。</p>
           </div>
           <span>2026-06-06</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>去重与 DPO chosen source 修复</h3>
+            <p>核对 Opus 指出的重复和 chosen-source 问题后，v0.2 exporter 新增精确 hash 去重、reward 顶层 <code>tests_passed/resolved</code> 字段，并让 DPO chosen 在同任务存在 agent resolved patch 时优先使用成功 agent patch，否则回退 SWE-bench gold patch。重建后当前 <code>SFT patch=41</code>、<code>DPO main=60</code>、<code>debug_cases=60</code>、<code>excluded=27</code>，重复样本为 0。</p>
+          </div>
+          <span>2026-06-07</span>
         </div>
         <div class="item">
           <span class="badge done">完成</span>
@@ -668,7 +677,7 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>训练启动门槛已达到：当前 <code>SFT=42/30</code>、<code>DPO=61/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
+        <li>训练启动门槛已达到：当前 <code>SFT=41/30</code>、<code>DPO=60/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
         <li>下一步应冻结一个训练快照，先跑 SFT/DPO 数据格式 smoke，再启动小规模训练与 held-out 官方评测对比；继续扩容时仍按 Mini → official eval → 回填 → 重建 → 闭环审计执行。</li>
         <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 <code>build_fake_data.sh</code> legacy 输出只作历史/调试，不进入训练。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
