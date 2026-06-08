@@ -149,6 +149,11 @@ Current generated data is under `/data/yiyuldx/swe`:
 - v0.2 dataset rows: SFT plan 41, SFT patch 41, DPO main 60, debug cases 60, reward logs 103, excluded 27.
 - v0.2 DPO chosen sources: `agent_resolved_patch=1`, `swebench_gold_patch=59`.
 - `train_ready=true` because the current gate is `SFT >= 30` and `DPO >= 60`.
+- Qwen2.5-Coder-7B-Instruct is local at `/data/yiyuldx/swe/models/Qwen2.5-Coder-7B-Instruct`.
+- SFT/DPO tokenizer-level dry-run smoke has passed and writes training snapshots/metrics to `/data/yiyuldx/swe/outputs/training`.
+- `reports/training_dashboard.html` and `/api/training-runs` / `/api/training-metrics` expose smoke metrics in the local review server.
+- Do not treat this as formal training: no model weights have been updated yet.
+- Current dependency caveat: `trl 1.5.1` DPOTrainer import expects `torch.distributed.fsdp.FSDPModule`, which is not present in `torch 2.5.1+cu121`; formal DPO needs a version pin/compatibility fix first.
 - Local Docker has 94 SWE-bench official `latest` images with corresponding Mini run and official eval records.
 - Current closure audit is clean: `missing_mini=0`, `missing_official=0`, `nonempty_patch_missing_official=0`.
 
@@ -365,4 +370,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=41` and `DPO main=60` after exact training-row dedupe. The next valuable milestone is freezing a reproducible training snapshot and running a small SFT/DPO smoke, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.
+Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=41` and `DPO main=60` after exact training-row dedupe. Qwen tokenizer-level SFT/DPO dry-run smoke and the training dashboard are in place; no formal training has started. The next valuable milestone is resolving the DPOTrainer dependency pin and, after explicit user confirmation, running a small SFT LoRA experiment with metrics written to `/data/yiyuldx/swe/outputs/training`, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.

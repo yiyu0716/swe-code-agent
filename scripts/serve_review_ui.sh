@@ -9,6 +9,7 @@ RUNS="${SWETRACE_RUNS:-/data/yiyuldx/swe/runs}"
 QUEUE="${SWETRACE_REVIEW_QUEUE:-/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl}"
 ANNOTATIONS="${SWETRACE_REVIEW_ANNOTATIONS:-/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl}"
 DPO_DATASET="${SWETRACE_DPO_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.2}"
+TRAINING="${SWETRACE_TRAINING_OUT:-/data/yiyuldx/swe/outputs/training}"
 
 "${PYTHON}" -m swetrace.labeling.review_server \
   --host "${HOST}" \
@@ -17,4 +18,5 @@ DPO_DATASET="${SWETRACE_DPO_DATASET:-/data/yiyuldx/swe/outputs/datasets/v0.2}"
   --runs "${RUNS}" \
   --queue "${QUEUE}" \
   --annotations "${ANNOTATIONS}" \
-  --dpo-dataset "${DPO_DATASET}"
+  --dpo-dataset "${DPO_DATASET}" \
+  --training "${TRAINING}"

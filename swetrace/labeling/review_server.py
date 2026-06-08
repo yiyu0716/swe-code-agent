@@ -6,6 +6,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 from swetrace.schema import ReviewAnnotation
+from swetrace.training.metrics import list_training_runs, load_training_metrics
+from swetrace.training.snapshot import DEFAULT_TRAINING_OUT
 
 DEFAULT_RUNS = Path("/data/yiyuldx/swe/runs")
 DEFAULT_QUEUE = Path("/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl")
@@ -96,6 +98,21 @@ def load_dpo_dataset(dataset: Path = DEFAULT_DPO_DATASET, split: str = "main") -
     }
 
 
+def list_training_runs_payload(training: Path = DEFAULT_TRAINING_OUT) -> dict:
+    items = list_training_runs(root=training)
+    return {"path": str(training), "total": len(items), "items": items}
+
+
+def load_training_metrics_payload(training: Path = DEFAULT_TRAINING_OUT, run_id: str = "") -> dict:
+    items = load_training_metrics(root=training, run_id=run_id)
+    return {
+        "path": str(training / run_id / "metrics.jsonl"),
+        "run_id": run_id,
+        "total": len(items),
+        "items": items,
+    }
+
+
 def save_annotation(
     queue: Path = DEFAULT_QUEUE,
     out: Path = DEFAULT_ANNOTATIONS,
@@ -137,6 +154,7 @@ def serve(
     queue: Path = DEFAULT_QUEUE,
     annotations: Path = DEFAULT_ANNOTATIONS,
     dpo_dataset: Path = DEFAULT_DPO_DATASET,
+    training: Path = DEFAULT_TRAINING_OUT,
 ) -> None:
     handler = _make_handler(
         reports=reports,
@@ -144,6 +162,7 @@ def serve(
         queue=queue,
         annotations=annotations,
         dpo_dataset=dpo_dataset,
+        training=training,
     )
     server = ThreadingHTTPServer((host, port), handler)
     print(f"SWE-Trace review UI: http://{host}:{port}/review", flush=True)
@@ -156,6 +175,7 @@ def _make_handler(
     queue: Path,
     annotations: Path,
     dpo_dataset: Path = DEFAULT_DPO_DATASET,
+    training: Path = DEFAULT_TRAINING_OUT,
 ):
     class ReviewHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
@@ -179,6 +199,13 @@ def _make_handler(
                 if parsed.path == "/api/dpo-dataset":
                     split = parse_qs(parsed.query).get("split", ["main"])[0]
                     self._send_json(load_dpo_dataset(dataset=dpo_dataset, split=split))
+                    return
+                if parsed.path == "/api/training-runs":
+                    self._send_json(list_training_runs_payload(training=training))
+                    return
+                if parsed.path == "/api/training-metrics":
+                    run_id = parse_qs(parsed.query).get("run_id", [""])[0]
+                    self._send_json(load_training_metrics_payload(training=training, run_id=run_id))
                     return
                 html_path = _html_path_for_request(reports=reports, request_path=parsed.path)
                 if html_path is not None:
@@ -280,6 +307,7 @@ def main() -> None:
     parser.add_argument("--queue", type=Path, default=DEFAULT_QUEUE)
     parser.add_argument("--annotations", type=Path, default=DEFAULT_ANNOTATIONS)
     parser.add_argument("--dpo-dataset", type=Path, default=DEFAULT_DPO_DATASET)
+    parser.add_argument("--training", type=Path, default=DEFAULT_TRAINING_OUT)
     args = parser.parse_args()
     serve(
         host=args.host,
@@ -289,6 +317,7 @@ def main() -> None:
         queue=args.queue,
         annotations=args.annotations,
         dpo_dataset=args.dpo_dataset,
+        training=args.training,
     )
 
 

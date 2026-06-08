@@ -146,6 +146,7 @@
       <a href="annotation_calibration.html">标注校准页</a>
       <a href="data_quality_report.html">数据质量报告</a>
       <a href="dpo_browser.html">DPO 数据浏览器</a>
+      <a href="training_dashboard.html">训练监控</a>
       <a href="http://127.0.0.1:20039/review">人工复核工作台</a>
     </nav>
   </header>
@@ -216,7 +217,11 @@
         <code>missing_official=0</code>。当前 official-aware v0.2 为 <code>SFT patch=41</code>、
         <code>DPO main=60</code>、<code>debug_cases=60</code>、<code>reward logs=103</code>；
         DPO chosen source 为 <code>agent_resolved_patch=1</code>、<code>swebench_gold_patch=59</code>。
-        <code>train_ready=true</code>，已达到当前启动真实训练的质量门槛。
+        <code>train_ready=true</code>，已达到当前启动真实训练的质量门槛。当前已下载
+        <code>Qwen/Qwen2.5-Coder-7B-Instruct</code> 到 <code>/data/yiyuldx/swe/models</code>，
+        并新增训练快照、metrics JSONL、SFT/DPO dry-run smoke 与
+        <code>reports/training_dashboard.html</code>。已完成 Qwen tokenizer 级 SFT/DPO smoke，
+        指标写入 <code>/data/yiyuldx/swe/outputs/training</code>；尚未启动正式训练。
       </p>
     </section>
 
@@ -666,6 +671,14 @@
         <div class="item">
           <span class="badge done">完成</span>
           <div>
+            <h3>训练 smoke 与 loss 监控</h3>
+            <p>新增 <code>swetrace.training</code>、<code>scripts/run_sft_smoke.sh</code>、<code>scripts/run_dpo_smoke.sh</code>、训练 metrics API 和 <code>reports/training_dashboard.html</code>。已用本地 Qwen2.5-Coder-7B-Instruct tokenizer 对 v0.2 跑通 SFT/DPO dry-run：SFT 读取 41 条，DPO 读取 60 对，均写入 <code>metrics.jsonl</code> 和 <code>snapshot.json</code>，模式为 <code>dry_run_no_weight_update</code>。同时确认 <code>trl 1.5.1</code> 的 <code>DPOTrainer</code> 与当前 <code>torch 2.5.1+cu121</code> 不兼容，正式 DPO 训练前需要单独处理版本 pin。</p>
+          </div>
+          <span>2026-06-08</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
             <h3>训练数据入口收口</h3>
             <p>核对 Opus 新一轮建议后确认：当前 v0.2 已消费官方评测结果，<code>report_official_mismatch=0</code>；真实风险是旧 root JSONL 和 v0.1 仍可能被误用。已将旧 root JSONL 移到 <code>/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605</code>，并把 Web 浏览器、review server、handoff 和 README 默认入口统一到 <code>/data/yiyuldx/swe/outputs/datasets/v0.2</code>。真实训练只用 <code>build_official_v02.sh</code> 重建的 official-aware v0.2。</p>
           </div>
@@ -678,7 +691,7 @@
       <h2>下一步</h2>
       <ul>
         <li>训练启动门槛已达到：当前 <code>SFT=41/30</code>、<code>DPO=60/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
-        <li>下一步应冻结一个训练快照，先跑 SFT/DPO 数据格式 smoke，再启动小规模训练与 held-out 官方评测对比；继续扩容时仍按 Mini → official eval → 回填 → 重建 → 闭环审计执行。</li>
+        <li>训练快照和 SFT/DPO dry-run smoke 已跑通；下一步是在你确认后处理 DPOTrainer 版本兼容并启动小规模 SFT LoRA，再做 held-out 官方评测对比。</li>
         <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 <code>build_fake_data.sh</code> legacy 输出只作历史/调试，不进入训练。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
       </ul>

@@ -11,6 +11,8 @@ import pytest
 from swetrace.labeling.review_server import (
     build_review_payload,
     _make_handler,
+    list_training_runs_payload,
+    load_training_metrics_payload,
     load_dpo_dataset,
     load_run_detail,
     save_annotation,
@@ -303,6 +305,63 @@ def test_review_server_dpo_api_uses_configured_dataset_path(tmp_path) -> None:
         assert payload["manifest"]["version"] == "v-test"
         assert payload["items"][0]["meta"]["run_id"] == "run-custom"
         assert payload["path"] == str(dataset / "dpo_main.jsonl")
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_training_payloads_return_runs_and_metrics(tmp_path) -> None:
+    training = tmp_path / "training"
+    run_dir = training / "sft-smoke"
+    run_dir.mkdir(parents=True)
+    (run_dir / "snapshot.json").write_text(
+        json.dumps({"run_id": "sft-smoke", "stage": "sft_smoke"})
+    )
+    (run_dir / "metrics.jsonl").write_text(
+        json.dumps({"step": 1, "train_loss": 1.2}) + "\n"
+        + json.dumps({"step": 2, "train_loss": 0.9}) + "\n"
+    )
+
+    runs_payload = list_training_runs_payload(training=training)
+    metrics_payload = load_training_metrics_payload(training=training, run_id="sft-smoke")
+
+    assert runs_payload["total"] == 1
+    assert runs_payload["items"][0]["run_id"] == "sft-smoke"
+    assert runs_payload["items"][0]["latest_metric"]["step"] == 2
+    assert metrics_payload["total"] == 2
+    assert metrics_payload["items"][1]["train_loss"] == 0.9
+
+
+def test_review_server_training_api_uses_configured_training_root(tmp_path) -> None:
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    training = tmp_path / "training"
+    run_dir = training / "dpo-smoke"
+    run_dir.mkdir(parents=True)
+    (run_dir / "snapshot.json").write_text(
+        json.dumps({"run_id": "dpo-smoke", "stage": "dpo_smoke"})
+    )
+    (run_dir / "metrics.jsonl").write_text(json.dumps({"step": 1, "train_loss": 0.7}) + "\n")
+    handler = _make_handler(
+        reports=reports,
+        runs=tmp_path / "runs",
+        queue=tmp_path / "queue.jsonl",
+        annotations=tmp_path / "annotations.jsonl",
+        training=training,
+    )
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    opener = build_opener(ProxyHandler({}))
+    try:
+        with opener.open(f"{base}/api/training-runs", timeout=3) as response:
+            runs_payload = json.loads(response.read().decode())
+        with opener.open(f"{base}/api/training-metrics?run_id=dpo-smoke", timeout=3) as response:
+            metrics_payload = json.loads(response.read().decode())
+        assert runs_payload["items"][0]["run_id"] == "dpo-smoke"
+        assert metrics_payload["items"][0]["train_loss"] == 0.7
     finally:
         server.shutdown()
         server.server_close()

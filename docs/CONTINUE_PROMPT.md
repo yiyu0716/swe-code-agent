@@ -30,6 +30,9 @@
 - gold-patch vs agent-patch DPO pair 构建
 - official-aware v0.2 数据构建脚本：`build_official_v02.sh`
 - 当前 `/data/yiyuldx/swe/outputs/datasets/v0.2` 已有 SFT plan 41、patch 41、DPO main 60、debug cases 60、reward logs 103，`train_ready=true`；DPO chosen source 为 `agent_resolved_patch=1`、`swebench_gold_patch=59`
+- Qwen2.5-Coder-7B-Instruct 已下载到 `/data/yiyuldx/swe/models/Qwen2.5-Coder-7B-Instruct`
+- 已新增训练快照、metrics JSONL、SFT/DPO dry-run smoke、`training_dashboard.html` 和训练 metrics API；当前 smoke 只验证 tokenizer/数据/metrics，不更新权重
+- 注意：当前 `trl 1.5.1` 的 `DPOTrainer` 与 `torch 2.5.1+cu121` 不兼容，正式 DPO 训练前需要处理版本 pin
 - 旧 root JSONL 已归档到 `/data/yiyuldx/swe/outputs/datasets/legacy_root_20260605`；do not train on those root JSONL files 或 v0.1 filtered samples
 - 当前 SWE-bench Lite dev 本地任务已跑完；下一批优先冻结 v0.2 训练快照、跑数据格式 smoke 和小规模 SFT/DPO dry run
 

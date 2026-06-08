@@ -222,7 +222,26 @@ Current real-run status:
 - The manual review queue is written to `/data/yiyuldx/swe/outputs/reports/manual_review_queue.jsonl`.
 - Manual annotations are written to `/data/yiyuldx/swe/outputs/reports/manual_annotations.jsonl`; browser review smoke annotations have been recorded for `pydicom__pydicom-1694` and `pydicom__pydicom-1139`.
 Current broader-batch note: Docker image pulls are now stored on `/data`; the next useful
-step is freezing a reproducible v0.2 training snapshot and running a small SFT/DPO smoke.
+step is turning the dry-run smoke into a confirmed small SFT LoRA run after explicit approval.
+
+Training smoke and monitoring:
+
+```bash
+SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python \
+SWETRACE_TRAIN_RUN_ID=sft-smoke-qwen-tokenizer \
+./scripts/run_sft_smoke.sh
+
+SWETRACE_PYTHON=/home/yiyuldx/birdNet/.venv/bin/python \
+SWETRACE_TRAIN_RUN_ID=dpo-smoke-qwen-tokenizer \
+./scripts/run_dpo_smoke.sh
+```
+
+These commands validate v0.2 rows with the local Qwen tokenizer and write `snapshot.json` plus
+`metrics.jsonl` under `/data/yiyuldx/swe/outputs/training`; they do not update model weights.
+Open `training_dashboard.html` through the review server to watch `train_loss`, `eval_loss`, and
+`learning_rate`. Current dependency note: `trl 1.5.1` imports `DPOTrainer` code that expects
+`torch.distributed.fsdp.FSDPModule`, which is absent from the current `torch 2.5.1+cu121`;
+pin/adjust the DPO training stack before formal DPO training.
 
 ## Local Progress Report
 

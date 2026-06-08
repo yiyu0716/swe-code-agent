@@ -48,6 +48,8 @@ def test_progress_page_links_to_project_overview() -> None:
     assert "数据质量报告" in html
     assert "dpo_browser.html" in html
     assert "DPO 数据浏览器" in html
+    assert "training_dashboard.html" in html
+    assert "训练监控" in html
     assert "官方 SWE-bench 评测" in html
     assert "42 个官方 resolved" in html
     assert "SFT Patch" in html
@@ -200,6 +202,25 @@ def test_dpo_browser_page_documents_splits_and_loads_api() -> None:
         "rejected",
         "official_resolved",
         "数据质量报告",
+    ]
+    for text in required_text:
+        assert text in html
+
+
+def test_training_dashboard_page_documents_metrics_api() -> None:
+    html_path = REPO_ROOT / "reports" / "training_dashboard.html"
+    html = html_path.read_text()
+    _Parser().feed(html)
+
+    required_text = [
+        "训练监控",
+        "/api/training-runs",
+        "/api/training-metrics",
+        "train_loss",
+        "eval_loss",
+        "learning_rate",
+        "checkpoint",
+        "dry_run_no_weight_update",
     ]
     for text in required_text:
         assert text in html
