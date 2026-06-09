@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shlex
 import subprocess
 from dataclasses import dataclass
@@ -171,7 +172,17 @@ def _message_to_step(message: dict[str, Any], run_id: str, task_id: str, step_id
                 tool_args = {"raw": args}
         elif isinstance(args, dict):
             tool_args = args
+    elif text_action := _textbased_action(message):
+        tool_name = "bash"
+        tool_args = {"command": text_action}
     phase = _infer_phase(content=content, tool_name=tool_name, tool_args=tool_args, role=message.get("role"))
+    tool_result = None
+    if message.get("role") == "tool":
+        tool_result = content
+    elif message.get("role") == "user":
+        raw_output = (message.get("extra") or {}).get("raw_output")
+        if isinstance(raw_output, str):
+            tool_result = raw_output
     return TrajectoryStep(
         run_id=run_id,
         task_id=task_id,
@@ -180,10 +191,26 @@ def _message_to_step(message: dict[str, Any], run_id: str, task_id: str, step_id
         model_output=content,
         tool_name=tool_name,
         tool_args=tool_args,
-        tool_result=content if message.get("role") == "tool" else None,
+        tool_result=tool_result,
         affected_files=_affected_files(tool_args),
         workspace_changed=phase == "edit",
     )
+
+
+def _textbased_action(message: dict[str, Any]) -> str:
+    if message.get("role") != "assistant":
+        return ""
+    extra = message.get("extra") or {}
+    actions = extra.get("actions") or []
+    if actions and isinstance(actions, list):
+        action = actions[0]
+        if isinstance(action, dict):
+            command = action.get("command")
+            if isinstance(command, str):
+                return command
+    content = str(message.get("content") or "")
+    match = re.search(r"```mswea_bash_command\s*\n(.*?)\n```", content, flags=re.DOTALL)
+    return match.group(1).strip() if match else ""
 
 
 def _infer_phase(
@@ -201,10 +228,10 @@ def _infer_phase(
         return "test"
     if any(word in haystack for word in ["edit", "str_replace", "replace", "write"]):
         return "edit"
+    if any(word in haystack for word in ["grep", "search", "find", "rg "]):
+        return "search"
     if any(word in haystack for word in ["view", "read", "cat", "inspect"]):
         return "read"
-    if any(word in haystack for word in ["grep", "search", "find"]):
-        return "search"
     return "plan"
 
 

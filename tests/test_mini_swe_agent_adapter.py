@@ -56,6 +56,93 @@ def test_parse_real_mini_trajectory_extracts_exit_patch_and_usage() -> None:
     assert parsed.steps[-1].phase == "final"
 
 
+def test_parse_textbased_mini_trajectory_extracts_actions_and_patch() -> None:
+    payload = {
+        "info": {
+            "config": {"model": {"model_name": "openai/qwen2.5-coder-7b-instruct"}},
+        },
+        "messages": [
+            {
+                "role": "assistant",
+                "content": (
+                    "THOUGHT: Inspect the target file.\n\n"
+                    "```mswea_bash_command\n"
+                    "rg -n \"add_one\" src/math_utils.py\n"
+                    "```"
+                ),
+                "extra": {
+                    "actions": [{"command": 'rg -n "add_one" src/math_utils.py'}],
+                    "response": {
+                        "usage": {
+                            "prompt_tokens": 10,
+                            "completion_tokens": 5,
+                            "total_tokens": 15,
+                        }
+                    },
+                },
+            },
+            {
+                "role": "user",
+                "content": "<returncode>0</returncode>\n<output>1:def add_one(x): return x</output>",
+                "extra": {
+                    "raw_output": "1:def add_one(x): return x\n",
+                    "returncode": 0,
+                },
+            },
+            {
+                "role": "assistant",
+                "content": (
+                    "THOUGHT: Submit the source patch.\n\n"
+                    "```mswea_bash_command\n"
+                    "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && cat patch.txt\n"
+                    "```"
+                ),
+                "extra": {
+                    "actions": [{"command": "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && cat patch.txt"}],
+                    "response": {
+                        "usage": {
+                            "prompt_tokens": 20,
+                            "completion_tokens": 6,
+                            "total_tokens": 26,
+                        }
+                    },
+                },
+            },
+            {
+                "role": "exit",
+                "content": "",
+                "extra": {
+                    "submission": (
+                        "diff --git a/src/math_utils.py b/src/math_utils.py\n"
+                        "--- a/src/math_utils.py\n"
+                        "+++ b/src/math_utils.py\n"
+                        "@@\n"
+                        "-def add_one(x): return x\n"
+                        "+def add_one(x): return x + 1\n"
+                    )
+                },
+            },
+        ],
+    }
+
+    parsed = parse_mini_trajectory(
+        payload=payload,
+        run_id="run-textbased",
+        task_id="fake-mini-task",
+        agent="mini-swe-agent",
+    )
+
+    assert parsed.report.model == "openai/qwen2.5-coder-7b-instruct"
+    assert parsed.report.num_tool_calls == 2
+    assert parsed.report.token_usage.total == 41
+    assert parsed.patch.startswith("diff --git a/src/math_utils.py")
+    assert parsed.steps[0].tool_name == "bash"
+    assert parsed.steps[0].tool_args == {"command": 'rg -n "add_one" src/math_utils.py'}
+    assert parsed.steps[0].phase == "search"
+    assert parsed.steps[1].tool_result == "1:def add_one(x): return x\n"
+    assert parsed.steps[-1].phase == "final"
+
+
 def test_render_command_template_only_replaces_supported_placeholders() -> None:
     rendered = render_command_template(
         "runner --json '{\"keep\": true}' --instance {task_id} --output {traj_path}",
