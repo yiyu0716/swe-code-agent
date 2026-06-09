@@ -223,6 +223,8 @@
         <code>reports/training_dashboard.html</code>。已完成 Qwen tokenizer 级 SFT/DPO smoke，
         指标写入 <code>/data/yiyuldx/swe/outputs/training</code>。本轮已完成真实 SFT LoRA
         1-step smoke：仅更新 LoRA adapter、未保存完整模型、未启动正式训练。
+        2026-06-09 已按新路线固定 20 条 clean held-out eval set，并接入 R2E-Gym 公开
+        SFT trajectories：公开规模数据用于 warmup，本地 v0.2 继续作为高可信校准集。
       </p>
     </section>
 
@@ -693,6 +695,30 @@
           </div>
           <span>2026-06-06</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>Qwen clean held-out eval set</h3>
+            <p>新增 <code>swetrace.eval_sets.build_clean_swebench</code> 和 <code>scripts/build_qwen_eval_set.sh</code>，从 SWE-bench Lite test split 选择 20 条 clean held-out 任务，并排除 v0.2 训练/奖励/排除表中见过的任务。当前输出位于 <code>/data/yiyuldx/swe/eval_sets/qwen_baseline_v0</code>：source total 300、excluded seen 73、clean pool 227、selected 20。</p>
+          </div>
+          <span>2026-06-09</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>公开 SFT 轨迹导入</h3>
+            <p>通过 <code>curl</code> 从 <code>hf-mirror.com</code> 下载 <code>R2E-Gym/R2EGym-SFT-Trajectories</code> parquet 到 <code>/data/yiyuldx/swe/public_datasets/raw</code>，新增 <code>swetrace.data_builder.import_public_sft</code> 和 <code>scripts/import_public_sft.sh</code>。导入后 <code>public_sft_v0.1</code> 为 <code>messages_v1</code>：source rows 3231、imported 3224、excluded 7，并显式过滤 eval set 与 v0.2 的 117 个 task-id 污染词。</p>
+          </div>
+          <span>2026-06-09</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>SFT mix 数据集与 smoke</h3>
+            <p>新增 <code>swetrace.data_builder.build_training_mix</code> 和 <code>scripts/build_sft_mix.sh</code>，把公开 <code>messages_v1</code> 与本地 official-aware v0.2 SFT patch 合并为 <code>/data/yiyuldx/swe/outputs/datasets/sft_mix_v0.1</code>：public messages 3224、local SFT 41、total 3265。Qwen tokenizer dry-run 已通过，run <code>sft-mix-dry-smoke-20260609T064300Z</code>；1-step LoRA smoke 已通过，run <code>sft-mix-lora-smoke-20260609T064338Z</code>，<code>train_loss=1.849222</code>、<code>grad_norm=0.285644</code>、adapter 约 78MB，<code>formal_training=false</code>。</p>
+          </div>
+          <span>2026-06-09</span>
+        </div>
       </div>
     </section>
 
@@ -700,7 +726,8 @@
       <h2>下一步</h2>
       <ul>
         <li>训练启动门槛已达到：当前 <code>SFT=41/30</code>、<code>DPO=60/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
-        <li>训练快照、SFT/DPO dry-run smoke 和 SFT LoRA 1-step smoke 已跑通；下一步是在你确认后启动正式小规模 SFT LoRA，再做 held-out 官方评测对比。</li>
+        <li>训练快照、SFT/DPO dry-run smoke、SFT LoRA 1-step smoke 和公开+本地 <code>sft_mix_v0.1</code> smoke 已跑通；下一步是在你确认后配置正式 SFT LoRA 参数，并用同一份 20 条 clean held-out eval set 对比 Qwen base 与 LoRA。</li>
+        <li>当前本机尚未安装 <code>vllm</code>；Qwen base 跑 mini-SWE-agent baseline 需要先接通本地 OpenAI-compatible 推理服务或 mini-SWE-agent 可用的本地 provider。</li>
         <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 <code>build_fake_data.sh</code> legacy 输出只作历史/调试，不进入训练。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
       </ul>

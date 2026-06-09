@@ -25,9 +25,12 @@ def run_sft_smoke(
     load_tokenizer: bool = True,
     git_commit: str | None = None,
 ) -> dict[str, Any]:
-    rows = _read_jsonl(dataset / "sft_patch.jsonl")
-    _validate_sft_rows(rows)
-    tokenizer_info = _tokenizer_info(model, rows, _format_sft, load_tokenizer=load_tokenizer)
+    rows, dataset_format, formatter = _load_sft_rows(dataset)
+    if dataset_format == "messages_v1":
+        _validate_messages_rows(rows)
+    else:
+        _validate_sft_rows(rows)
+    tokenizer_info = _tokenizer_info(model, rows, formatter, load_tokenizer=load_tokenizer)
     snapshot = create_training_snapshot(
         out=out,
         run_id=run_id,
@@ -37,6 +40,7 @@ def run_sft_smoke(
         git_commit=git_commit or _git_commit(),
         config={
             "max_steps": max_steps,
+            "dataset_format": dataset_format,
             "load_tokenizer": load_tokenizer,
             "tokenizer": tokenizer_info,
             "mode": "dry_run_no_weight_update",
@@ -152,7 +156,14 @@ def dpo_command(
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    return [json.loads(line) for line in path.read_text().split("\n") if line.strip()]
+
+
+def _load_sft_rows(dataset: Path):
+    messages_path = dataset / "messages.jsonl"
+    if messages_path.exists():
+        return _read_jsonl(messages_path), "messages_v1", _format_messages
+    return _read_jsonl(dataset / "sft_patch.jsonl"), "sft_patch", _format_sft
 
 
 def _validate_sft_rows(rows: list[dict[str, Any]]) -> None:
@@ -190,6 +201,30 @@ def _validate_dpo_rows(rows: list[dict[str, Any]]) -> None:
         raise ValueError(f"invalid DPO rows: {bad[:5]}")
 
 
+def _validate_messages_rows(rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        raise ValueError("messages.jsonl is empty")
+    bad = []
+    for index, row in enumerate(rows):
+        messages = row.get("messages")
+        if not isinstance(messages, list) or not messages:
+            bad.append(index)
+            continue
+        if not any(isinstance(message, dict) and message.get("role") == "assistant" for message in messages):
+            bad.append(index)
+            continue
+        for message in messages:
+            if not (
+                isinstance(message, dict)
+                and str(message.get("role") or "").strip()
+                and str(message.get("content") or "").strip()
+            ):
+                bad.append(index)
+                break
+    if bad:
+        raise ValueError(f"invalid messages rows: {bad[:5]}")
+
+
 def _tokenizer_info(
     model: Path,
     rows: list[dict[str, Any]],
@@ -217,6 +252,13 @@ def _format_sft(row: dict[str, Any]) -> str:
         f"{row['input']}\n\n"
         f"Patch:\n{row['output']}"
     )
+
+
+def _format_messages(row: dict[str, Any]) -> str:
+    parts = []
+    for message in row["messages"]:
+        parts.append(f"{message['role'].upper()}:\n{message['content']}")
+    return "\n\n".join(parts)
 
 
 def _format_dpo(row: dict[str, Any]) -> str:

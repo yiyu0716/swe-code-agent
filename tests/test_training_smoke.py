@@ -85,3 +85,40 @@ def test_run_dpo_smoke_validates_pairs_and_writes_metrics(tmp_path) -> None:
     assert result["snapshot"]["stage"] == "dpo_smoke"
     assert metrics[0]["stage"] == "dpo_smoke"
     assert metrics[-1]["train_loss"] > 0
+
+
+def test_run_sft_smoke_accepts_messages_dataset(tmp_path) -> None:
+    dataset = tmp_path / "datasets" / "sft_mix_v0.1"
+    dataset.mkdir(parents=True)
+    (dataset / "manifest.json").write_text(
+        json.dumps({"version": "sft-mix-test", "counts": {"total_messages": 1}})
+    )
+    (dataset / "messages.jsonl").write_text(
+        json.dumps(
+            {
+                "messages": [
+                    {"role": "user", "content": "Fix this issue."},
+                    {"role": "assistant", "content": "diff --git a/a.py b/a.py\n"},
+                ],
+                "metadata": {"source": "fixture"},
+            }
+        )
+        + "\n"
+    )
+    model = tmp_path / "model"
+    model.mkdir()
+    out = tmp_path / "training"
+
+    result = run_sft_smoke(
+        dataset=dataset,
+        model=model,
+        out=out,
+        run_id="sft-messages-smoke",
+        max_steps=1,
+        load_tokenizer=False,
+        git_commit="abc123",
+    )
+
+    assert result["status"] == "dry_run_ok"
+    assert result["rows_seen"] == 1
+    assert result["snapshot"]["config"]["dataset_format"] == "messages_v1"
