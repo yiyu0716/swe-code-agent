@@ -29,7 +29,7 @@ Current Python environment:
 Current verified status:
 
 ```text
-65 passed
+85 passed
 ```
 
 Docker is installed and reachable. In this Codex process, wrap Docker commands with `sg docker -c`
@@ -153,6 +153,15 @@ Current generated data is under `/data/yiyuldx/swe`:
 - SFT/DPO tokenizer-level dry-run smoke has passed and writes training snapshots/metrics to `/data/yiyuldx/swe/outputs/training`.
 - `reports/training_dashboard.html` and `/api/training-runs` / `/api/training-metrics` expose smoke metrics in the local review server.
 - Do not treat this as formal training: no model weights have been updated yet.
+- Main training/data environment is restored to `/home/yiyuldx/birdNet/.venv` with `torch 2.5.1+cu121`,
+  `transformers 4.46.3`, `tokenizers 0.20.3`, `trl 0.12.2`, `peft 0.19.1`, and
+  `bitsandbytes 0.49.2`; CUDA sees 3 RTX 3090 GPUs.
+- Do not install vLLM into the main `.venv`. Use the isolated vLLM environment at
+  `/data/yiyuldx/swe/venvs/vllm-cu121`.
+- Isolated vLLM status: `vllm 0.6.6.post1`, `torch 2.5.1+cu124`, `transformers 4.46.3`;
+  `uv pip check` passes in that environment.
+- vLLM Qwen OpenAI-compatible request smoke passed with run
+  `vllm-qwen-smoke-20260609T091743Z`; the response was `SWE-Trace vLLM smoke ok`.
 - Current dependency caveat: `trl 1.5.1` DPOTrainer import expects `torch.distributed.fsdp.FSDPModule`, which is not present in `torch 2.5.1+cu121`; formal DPO needs a version pin/compatibility fix first.
 - Local Docker has 94 SWE-bench official `latest` images with corresponding Mini run and official eval records.
 - Current closure audit is clean: `missing_mini=0`, `missing_official=0`, `nonempty_patch_missing_official=0`.
@@ -275,9 +284,9 @@ On this machine, the current Codex process should wrap Docker commands with `sg 
 
 ## Target Machine Recommendation
 
-This host can continue once Docker storage is moved/pruned. A GPU becomes useful later for
-Qwen-Coder LoRA/QLoRA post-training, but SWE-bench collection mainly needs Docker, disk,
-CPU, RAM, and stable network/proxy.
+This host can continue once Docker storage is moved/pruned. GPUs are already usable for
+Qwen-Coder LoRA/QLoRA smoke and local vLLM inference, while SWE-bench collection mainly
+needs Docker, disk, CPU, RAM, and stable network/proxy.
 
 Minimum practical setup:
 
@@ -326,10 +335,11 @@ http://<server-ip>:20038/
 1. Run full verification with `/home/yiyuldx/birdNet/.venv/bin/python -m pytest -q`.
 2. Run `sg docker -c './scripts/check_docker.sh'`.
 3. For every newly downloaded SWE-bench image/task, run Mini collection, official evaluation, import `official_eval.json` with `swetrace.eval.swebench_official import-statuses`, rebuild v0.2 with `./scripts/build_official_v02.sh`, then run `swetrace.collect.audit_swebench_closure`.
-4. Freeze the current `/data/yiyuldx/swe/outputs/datasets/v0.2` snapshot for training, then run data-format smoke checks and a small SFT/DPO training dry run.
-5. Continue SWE-bench Lite test split expansion only in closed batches: Mini collection, official evaluation, import/backfill, v0.2 rebuild, and closure audit.
-6. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
-7. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.
+4. Use `/data/yiyuldx/swe/venvs/vllm-cu121` to start the local Qwen OpenAI-compatible server, then run the 20-task clean held-out Qwen base baseline before comparing any LoRA checkpoint.
+5. Freeze the current `/data/yiyuldx/swe/outputs/datasets/v0.2` and `/data/yiyuldx/swe/outputs/datasets/sft_mix_v0.1` snapshots for training; only start formal SFT after explicit user confirmation.
+6. Continue SWE-bench Lite test split expansion only in closed batches: Mini collection, official evaluation, import/backfill, v0.2 rebuild, and closure audit.
+7. Keep reports updated, especially `reports/progress.html` and `reports/data_quality_report.html`.
+8. Push source/report changes to GitHub; never commit `/data` artifacts or credentials.
 
 ## Git and Commit Requirements
 
@@ -370,4 +380,4 @@ A model-service token was accidentally printed in the shell during the original 
 
 ## What to Tell the Next Agent
 
-Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=41` and `DPO main=60` after exact training-row dedupe. Qwen tokenizer-level SFT/DPO dry-run smoke and the training dashboard are in place; no formal training has started. The next valuable milestone is resolving the DPOTrainer dependency pin and, after explicit user confirmation, running a small SFT LoRA experiment with metrics written to `/data/yiyuldx/swe/outputs/training`, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.
+Continue from the current source tree. Do not restart the project design from scratch. The current v0.2 data has reached `train_ready=true` with `SFT patch=41` and `DPO main=60` after exact training-row dedupe. The main `.venv` is restored to the torch 2.5.1/cu121 training stack; vLLM is isolated in `/data/yiyuldx/swe/venvs/vllm-cu121` and has passed a local Qwen OpenAI-compatible request smoke. Qwen tokenizer-level SFT/DPO dry-run smoke, SFT mix dry-run smoke, and the training dashboard are in place; no formal training has started. The next valuable milestone is running the 20-task clean held-out Qwen base baseline through the isolated local vLLM service, then, after explicit user confirmation, running a small SFT LoRA experiment and comparing the same eval set, while keeping the download -> Mini -> official eval -> v0.2 rebuild closure gate for every future expansion batch.

@@ -243,6 +243,29 @@ Open `training_dashboard.html` through the review server to watch `train_loss`, 
 `torch.distributed.fsdp.FSDPModule`, which is absent from the current `torch 2.5.1+cu121`;
 pin/adjust the DPO training stack before formal DPO training.
 
+Qwen base inference for held-out evaluation should use the isolated vLLM environment, not the
+main SWE-Trace environment:
+
+```bash
+NO_PROXY=127.0.0.1,localhost,::1 \
+CUDA_VISIBLE_DEVICES=0 \
+HF_HOME=/data/yiyuldx/swe/hf_cache \
+HUGGINGFACE_HUB_CACHE=/data/yiyuldx/swe/hf_cache/hub \
+/data/yiyuldx/swe/venvs/vllm-cu121/bin/python -m vllm.entrypoints.openai.api_server \
+  --host 127.0.0.1 \
+  --port 18080 \
+  --model /data/yiyuldx/swe/models/Qwen2.5-Coder-7B-Instruct \
+  --served-model-name qwen2.5-coder-7b-instruct \
+  --trust-remote-code \
+  --max-model-len 2048 \
+  --gpu-memory-utilization 0.90 \
+  --enforce-eager
+```
+
+The main environment remains `/home/yiyuldx/birdNet/.venv` with `torch 2.5.1+cu121`,
+`transformers 4.46.3`, `tokenizers 0.20.3`, and `trl 0.12.2`. Do not install vLLM into
+that environment.
+
 ## Local Progress Report
 
 The progress page is generated at:

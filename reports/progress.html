@@ -225,6 +225,12 @@
         1-step smoke：仅更新 LoRA adapter、未保存完整模型、未启动正式训练。
         2026-06-09 已按新路线固定 20 条 clean held-out eval set，并接入 R2E-Gym 公开
         SFT trajectories：公开规模数据用于 warmup，本地 v0.2 继续作为高可信校准集。
+        2026-06-09 已恢复主训练环境到 <code>torch 2.5.1+cu121</code>、
+        <code>transformers 4.46.3</code>、<code>trl 0.12.2</code>；<code>vllm</code>
+        不再安装在主 <code>.venv</code>，而是独立放在
+        <code>/data/yiyuldx/swe/venvs/vllm-cu121</code>，版本为
+        <code>vllm 0.6.6.post1</code>。已通过本地 Qwen OpenAI-compatible
+        request smoke，run <code>vllm-qwen-smoke-20260609T091743Z</code>。
       </p>
     </section>
 
@@ -719,6 +725,22 @@
           </div>
           <span>2026-06-09</span>
         </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>主环境恢复与 vLLM 隔离</h3>
+            <p>修复误装新版 <code>vllm</code> 后导致的环境漂移：主 <code>/home/yiyuldx/birdNet/.venv</code> 已恢复到 <code>torch 2.5.1+cu121</code>、<code>transformers 4.46.3</code>、<code>tokenizers 0.20.3</code>、<code>trl 0.12.2</code>、<code>peft 0.19.1</code>、<code>bitsandbytes 0.49.2</code>，CUDA 可见 3 张 3090。低版本 <code>vllm 0.6.6.post1</code> 单独安装到 <code>/data/yiyuldx/swe/venvs/vllm-cu121</code>，避免污染主训练环境。</p>
+          </div>
+          <span>2026-06-09</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>恢复后 smoke/dry-run 验证</h3>
+            <p>恢复后重新跑通 <code>pytest</code>：<code>85 passed</code>。SFT mix dry-run 读取 <code>3265</code> 条 messages，run <code>sft-mix-dry-smoke-20260609T090929Z</code>；DPO v0.2 dry-run 读取 <code>60</code> 对，run <code>dpo-v02-dry-smoke-20260609T090929Z</code>。vLLM 本地 Qwen server smoke 通过：<code>/v1/chat/completions</code> 返回 <code>SWE-Trace vLLM smoke ok</code>，run <code>vllm-qwen-smoke-20260609T091743Z</code>。</p>
+          </div>
+          <span>2026-06-09</span>
+        </div>
       </div>
     </section>
 
@@ -727,7 +749,7 @@
       <ul>
         <li>训练启动门槛已达到：当前 <code>SFT=41/30</code>、<code>DPO=60/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
         <li>训练快照、SFT/DPO dry-run smoke、SFT LoRA 1-step smoke 和公开+本地 <code>sft_mix_v0.1</code> smoke 已跑通；下一步是在你确认后配置正式 SFT LoRA 参数，并用同一份 20 条 clean held-out eval set 对比 Qwen base 与 LoRA。</li>
-        <li>当前本机尚未安装 <code>vllm</code>；Qwen base 跑 mini-SWE-agent baseline 需要先接通本地 OpenAI-compatible 推理服务或 mini-SWE-agent 可用的本地 provider。</li>
+        <li>本机已安装隔离版 <code>vllm 0.6.6.post1</code> 到 <code>/data/yiyuldx/swe/venvs/vllm-cu121</code>，本地 Qwen OpenAI-compatible server smoke 已通过；下一步可在你确认后用这套服务跑 20 条 clean held-out eval 的 Qwen base baseline。</li>
         <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 <code>build_fake_data.sh</code> legacy 输出只作历史/调试，不进入训练。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
       </ul>
