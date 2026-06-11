@@ -237,7 +237,26 @@
         6 条非空 patch 全部进入官方 SWE-bench harness 并完成回填，official completed=6、
         resolved=0、errors=0，且不存在非空 patch 漏官方评测。mini-SWE-agent textbased
         轨迹 parser 已修正，可正确识别 Qwen 输出的 <code>mswea_bash_command</code> 代码块、
-        动作计数和 shell observation。
+        动作计数和 shell observation。2026-06-11 已完成第一次经你确认的正式 SFT LoRA
+        warmup：新增 <code>swetrace.training.sft_lora</code> 与 <code>scripts/run_sft_lora.sh</code>，
+        在 GPU0 上用 <code>sft_mix_v0.1</code> 训练
+        <code>sft-mix-qwen2p5-7b-lora-v01-20260611</code>，读取 <code>3265</code> 条
+        messages，跑 <code>80</code> steps，QLoRA 4bit、<code>r=16</code>、
+        <code>alpha=32</code>、<code>max_seq_length=1024</code>、有效 batch 为
+        <code>1 x 8</code>。训练产物位于
+        <code>/data/yiyuldx/swe/outputs/training/sft-mix-qwen2p5-7b-lora-v01-20260611</code>，
+        adapter 约 <code>170MB</code>，可训练参数 <code>40,370,176</code>，
+        共 <code>4,393,342,464</code> 参数。训练 metrics 写入 <code>metrics.jsonl</code>：
+        <code>80</code> 条 loss 点，首个 logging loss <code>1.8651</code>，最后 logging loss
+        <code>0.0001</code>，HuggingFace 聚合 <code>train_loss=0.1628</code>，无 NaN。隔离 vLLM 环境
+        <code>/data/yiyuldx/swe/venvs/vllm-cu121</code> 为 LoRA 推理补装
+        <code>setuptools==82.0.1</code> 后，已用 OpenAI-compatible API 挂载
+        <code>qwen2p5-sft-v01</code> 并通过 smoke：返回
+        <code>sft lora smoke ok</code>。本轮实验 manifest 写入
+        <code>/data/yiyuldx/swe/outputs/experiments/qwen2p5-7b-sft-v01-20260611T140358Z</code>。
+        重要边界：这证明正式权重更新、adapter 保存和 LoRA 推理链路通了；尚未证明
+        SWE-bench 能力提升，必须继续用同一 20 条 held-out eval 跑 SFT adapter 的 Mini
+        采集与官方评测。
       </p>
     </section>
 
@@ -749,12 +768,20 @@
           <span>2026-06-09</span>
         </div>
         <div class="item">
-          <span class="badge warn">进行中</span>
+          <span class="badge done">完成</span>
           <div>
             <h3>Qwen base baseline 链路</h3>
             <p>固定 20 条 clean held-out eval set 已跑完当前可执行 baseline：20/20 任务都有标准 run/report，18 条为模型运行后的 failed，<code>matplotlib__matplotlib-24970</code> 和 <code>matplotlib__matplotlib-25079</code> 因官方镜像拉取/启动长期阻塞标为 <code>env_error</code>。Django 3 条、<code>sympy__sympy-11870</code>、<code>matplotlib__matplotlib-25498</code>、<code>scikit-learn__scikit-learn-10949</code> 共 6 条非空 patch 均已进入官方 SWE-bench harness；当前 official completed=6、resolved=0、errors=0，结果已回填对应 <code>report.json</code>。本轮修复了 SWE-Trace mini parser，使其能解析 Qwen textbased 输出中的 <code>mswea_bash_command</code> 代码块、<code>extra.actions</code> 与 <code>raw_output</code>。</p>
           </div>
           <span>2026-06-09</span>
+        </div>
+        <div class="item">
+          <span class="badge done">完成</span>
+          <div>
+            <h3>Qwen SFT LoRA 正式训练</h3>
+            <p>在 GPU0 上完成首次正式 SFT LoRA warmup：新增 <code>swetrace.training.sft_lora</code> 和 <code>scripts/run_sft_lora.sh</code>，run <code>sft-mix-qwen2p5-7b-lora-v01-20260611</code> 读取 <code>sft_mix_v0.1</code> 的 <code>3265</code> 条 messages，跑 <code>80</code> steps，训练耗时约 <code>770.8s</code>，可训练参数 <code>40,370,176</code>，adapter 与 tokenizer 保存到 <code>/data/yiyuldx/swe/outputs/training/sft-mix-qwen2p5-7b-lora-v01-20260611</code>。训练 loss 记录 <code>80</code> 条，首个 logging loss <code>1.8651</code>，最后 logging loss <code>0.0001</code>，聚合 <code>train_loss=0.1628</code>，无 NaN。隔离 vLLM 环境补装 <code>setuptools==82.0.1</code> 后，LoRA 模型名 <code>qwen2p5-sft-v01</code> 通过 OpenAI-compatible 推理 smoke。实验资产见 <code>/data/yiyuldx/swe/outputs/experiments/qwen2p5-7b-sft-v01-20260611T140358Z</code>。</p>
+          </div>
+          <span>2026-06-11</span>
         </div>
       </div>
     </section>
@@ -762,9 +789,9 @@
     <section class="section">
       <h2>下一步</h2>
       <ul>
-        <li>训练启动门槛已达到：当前 <code>SFT=41/30</code>、<code>DPO=60/60</code>，<code>/data/yiyuldx/swe/outputs/datasets/v0.2</code> 已可作为第一版真实训练输入。</li>
-        <li>训练快照、SFT/DPO dry-run smoke、SFT LoRA 1-step smoke 和公开+本地 <code>sft_mix_v0.1</code> smoke 已跑通；正式训练仍等待你确认，不会自动启动。</li>
-        <li>Qwen base baseline 链路已确认可用：20 条 clean held-out eval 均有标准 report，6 条非空 patch 完成官方评测并回填，当前 resolved=0。下一步是在你确认后跑正式 SFT LoRA，再用同一批 eval 对比 LoRA；两个 Matplotlib env_error 可作为单独镜像诊断项。</li>
+        <li>训练启动门槛已达到并已完成第一轮正式 SFT LoRA：<code>sft_mix_v0.1</code> 用于 warmup，<code>v0.2</code> 仍是本地 official-aware 高可信校准集。</li>
+        <li>下一步不是继续看训练 loss，而是用同一 20 条 <code>qwen_baseline_v0</code> held-out eval 跑 <code>qwen2p5-sft-v01</code> 的 Mini 采集和官方 SWE-bench 评测；只有这一步完成后，才可以比较 base resolved=0 和 SFT 后 resolved。</li>
+        <li>当前训练 loss 很快降到接近 0，说明 LoRA 更新和数据拟合链路通了，但也提示 warmup 小样本/模板数据可能很容易记忆；不能把 loss 下降等同于 SWE-bench 能力提升。</li>
         <li>旧 <code>legacy_root_20260605</code> root JSONL、v0.1 filtered samples 和 <code>build_fake_data.sh</code> legacy 输出只作历史/调试，不进入训练。</li>
         <li>5 个 <code>psf/requests</code> pending run 暂不阻塞主线；requests 可作为专项诊断，不作为当前训练标签来源。</li>
       </ul>
